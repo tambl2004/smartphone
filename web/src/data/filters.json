@@ -1,0 +1,15 @@
+{
+  "priceRanges": [
+    { "label": "Tất cả mức giá", "min": 0, "max": 100000000 },
+    { "label": "Dưới 10 triệu", "min": 0, "max": 10000000 },
+    { "label": "Từ 10 - 20 triệu", "min": 10000000, "max": 20000000 },
+    { "label": "Từ 20 - 30 triệu", "min": 20000000, "max": 30000000 },
+    { "label": "Trên 30 triệu", "min": 30000000, "max": 100000000 }
+  ],
+  "sortOptions": [
+    { "label": "Nổi bật nhất", "value": "featured" },
+    { "label": "Giá từ thấp đến cao", "value": "price_asc" },
+    { "label": "Giá từ cao đến thấp", "value": "price_desc" },
+    { "label": "Đánh giá tốt nhất", "value": "rating" }
+  ]
+}

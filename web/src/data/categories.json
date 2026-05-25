@@ -1,0 +1,20 @@
+[
+  {
+    "id": "smartphones",
+    "name": "Điện thoại",
+    "slug": "smartphones",
+    "icon": "📱"
+  },
+  {
+    "id": "tablets",
+    "name": "Máy tính bảng",
+    "slug": "tablets",
+    "icon": "平板"
+  },
+  {
+    "id": "accessories",
+    "name": "Phụ kiện",
+    "slug": "accessories",
+    "icon": "🎧"
+  }
+]

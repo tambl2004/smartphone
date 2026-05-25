@@ -1,0 +1,111 @@
+import { RouterProvider, Route, useRouter } from '@routes/router';
+import { MainLayout } from '@components/layout/MainLayout';
+import { AdminLayout } from '@components/admin/AdminLayout';
+import { HomePage } from '@pages/users/HomePage';
+import { ProductListPage } from '@pages/users/ProductListPage';
+import { ProductDetailPage } from '@pages/users/ProductDetailPage';
+import { CartPage } from '@pages/users/CartPage';
+import { CheckoutPage } from '@pages/users/CheckoutPage';
+import { WishlistPage } from '@pages/users/WishlistPage';
+import { NotFoundPage } from '@pages/users/NotFoundPage';
+import { LoginPage } from '@pages/auth/Login';
+import { RegisterPage } from '@pages/auth/Register';
+import { ForgotPasswordPage } from '@pages/auth/ForgotPassword';
+import { DashboardPage } from '@pages/admin/DashboardPage';
+import { ProductsPage } from '@pages/admin/ProductsPage';
+import { OrdersPage } from '@pages/admin/OrdersPage';
+import { CustomersPage } from '@pages/admin/CustomersPage';
+import { ContentBannersPage } from '@pages/admin/content/BannersPage';
+import { ContentPromotionsPage } from '@pages/admin/content/PromotionsPage';
+import { ContentCategoriesPage } from '@pages/admin/content/CategoriesPage';
+import { ContentBrandsPage } from '@pages/admin/content/BrandsPage';
+import { ReportsPage } from '@pages/admin/ReportsPage';
+import { Toaster } from 'react-hot-toast';
+import './App.css';
+
+function AppContent() {
+  const { path } = useRouter();
+
+  // Trích xuất path cơ bản (không tính phần query params)
+  const basePath = path.split('?')[0];
+
+  // Auth routes - render without MainLayout
+  const authRoutes = ['/login', '/register', '/forgot-password'];
+  if (authRoutes.includes(basePath)) {
+    return (
+      <>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      </>
+    );
+  }
+
+  // Admin routes - render with AdminLayout
+  if (basePath.startsWith('/admin')) {
+    return (
+      <AdminLayout>
+        <Route path="/admin" element={<DashboardPage />} />
+        <Route path="/admin/products" element={<ProductsPage />} />
+        <Route path="/admin/orders" element={<OrdersPage />} />
+        <Route path="/admin/customers" element={<CustomersPage />} />
+        <Route path="/admin/content/banners" element={<ContentBannersPage />} />
+        <Route path="/admin/content/promotions" element={<ContentPromotionsPage />} />
+        <Route path="/admin/content/categories" element={<ContentCategoriesPage />} />
+        <Route path="/admin/content/brands" element={<ContentBrandsPage />} />
+        {/* Redirect /admin/content to the first sub-page */}
+        {basePath === '/admin/content' && <Route path="/admin/content" element={<ContentBannersPage />} />}
+        <Route path="/admin/reports" element={<ReportsPage />} />
+      </AdminLayout>
+    );
+  }
+
+  // Kiểm tra xem path hiện tại có hợp lệ không
+  const routes = ['/', '/products', '/cart', '/checkout', '/wishlist'];
+  const isDetailRoute = basePath.startsWith('/product/') && basePath.split('/').length === 3;
+  const isKnownRoute = routes.includes(basePath) || isDetailRoute;
+
+  return (
+    <MainLayout>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/products" element={<ProductListPage />} />
+      <Route path="/product/:id" element={<ProductDetailPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
+      {!isKnownRoute && <NotFoundPage />}
+    </MainLayout>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <RouterProvider>
+        <AppContent />
+      </RouterProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#333',
+            color: '#fff',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            padding: '12px 24px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+    </>
+  );
+}
+
+export default App;

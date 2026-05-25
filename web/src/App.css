@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #000000;
+  --color-primary-hover: #1a1a1a;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #ffffff;
+  --color-secondary-hover: #f5f5f5;
+  --color-secondary-foreground: #000000;
+
+  --color-background: #ffffff;
+  --color-background-muted: #f9f9f9;
+  --color-background-subtle: #f5f5f5;
+
+  --color-border: #e5e5e5;
+  --color-border-hover: #d0d0d0;
+  --color-border-active: #000000;
+
+  --color-text: #000000;
+  --color-text-muted: #808080;
+  --color-text-subtle: #333333;
+
+  --color-error: #e53935;
+  --color-warning: #f57c00;
+  --color-success: #43a047;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --spacing-13: 3.25rem;
+
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-full: 9999px;
+
+  --shadow-flat: none;
+  --shadow-hover: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-raised: 0px 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0px 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark light;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Focus ring utility */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Base custom utilities if needed */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .dark .glass {
+    background: rgba(17, 17, 17, 0.7);
+  }
+}
+
+/* ===== BRAND PARTNERS SECTION ===== */
+.brands-track {
+  display: flex;
+  width: max-content;
+  animation: brandSlide 40s linear infinite;
+  gap: 32px;
+}
+
+.brand-item {
+  flex-shrink: 0;
+  width: 150px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  padding: 14px;
+}
+
+.dark .brand-item {
+  background: #171717;
+  border-color: #262626;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.brand-item:hover {
+  transform: translateY(-4px);
+  border-color: #d1d5db;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.dark .brand-item:hover {
+  border-color: #404040;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.brand-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  opacity: 0.95;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.brand-item:hover img {
+  opacity: 1;
+}
+
+/* In dark mode, invert the Apple logo to make it white and visible on dark background */
+.dark .brand-item img[src*="apple.svg"] {
+  filter: invert(1);
+}
+
+@keyframes brandSlide {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Global hover effect for all buttons */
+button {
+  cursor: pointer;
+}
+
+/* ===== ADMIN LAYOUT OVERRIDES ===== */
+/* When admin layout is active, remove the constrained #root styles */
+#root:has(.admin-layout) {
+  width: 100%;
+  max-width: 100%;
+  border-inline: none;
+  text-align: left;
+}
+
+/* Admin Light Theme Overrides */
+[data-admin-theme="light"] .bg-\[\#141414\] {
+  background-color: #ffffff !important;
+  border-color: rgba(0,0,0,0.06) !important;
+}
+[data-admin-theme="light"] .bg-\[\#1A1A1A\] {
+  background-color: #ffffff !important;
+}
+[data-admin-theme="light"] select option {
+  background-color: #ffffff;
+  color: #1d1d1f;
+}
+
+/* Light Theme Text Colors (Bolder) */
+[data-admin-theme="light"] .text-white:not(.bg-red-600):not(.bg-indigo-600):not(.bg-emerald-600):not(.bg-red-500):not(.force-white) { color: #1d1d1f !important; }
+[data-admin-theme="light"] .force-white { color: #ffffff !important; }
+[data-admin-theme="light"] .text-white\/90 { color: rgba(29, 29, 31, 0.95) !important; }
+[data-admin-theme="light"] .text-white\/80 { color: rgba(29, 29, 31, 0.9) !important; }
+[data-admin-theme="light"] .text-white\/70 { color: rgba(29, 29, 31, 0.85) !important; }
+[data-admin-theme="light"] .text-white\/60 { color: rgba(29, 29, 31, 0.8) !important; }
+[data-admin-theme="light"] .text-white\/50 { color: rgba(29, 29, 31, 0.75) !important; }
+[data-admin-theme="light"] .text-white\/40 { color: rgba(29, 29, 31, 0.7) !important; }
+[data-admin-theme="light"] .text-white\/30 { color: rgba(29, 29, 31, 0.6) !important; }
+[data-admin-theme="light"] .text-white\/20 { color: rgba(29, 29, 31, 0.4) !important; }
+[data-admin-theme="light"] .text-white\/10 { color: rgba(29, 29, 31, 0.2) !important; }
+
+/* Light Theme Opacities (Less faded) */
+[data-admin-theme="light"] .opacity-10 { opacity: 0.3 !important; }
+[data-admin-theme="light"] .opacity-20 { opacity: 0.4 !important; }
+[data-admin-theme="light"] .opacity-30 { opacity: 0.6 !important; }
+[data-admin-theme="light"] .opacity-40 { opacity: 0.7 !important; }
+[data-admin-theme="light"] .opacity-50 { opacity: 0.8 !important; }
+[data-admin-theme="light"] .opacity-60 { opacity: 0.85 !important; }
+[data-admin-theme="light"] .opacity-70 { opacity: 0.9 !important; }
+
+/* Light Theme Action Buttons Always Visible (Products table etc) */
+[data-admin-theme="light"] .opacity-0.group-hover\:opacity-100 {
+  opacity: 1 !important;
+}
+
+/* Primary Buttons -> Black/White in Light Mode */
+[data-admin-theme="light"] .bg-indigo-600 {
+  background-color: #1d1d1f !important;
+  color: #ffffff !important;
+}
+[data-admin-theme="light"] .bg-indigo-600:hover,
+[data-admin-theme="light"] .hover\:bg-indigo-500:hover {
+  background-color: #333336 !important;
+}
+[data-admin-theme="light"] .text-indigo-600,
+[data-admin-theme="light"] .text-indigo-500 {
+  color: #1d1d1f !important;
+}
+[data-admin-theme="light"] .bg-indigo-50 {
+  background-color: #f5f5f7 !important;
+  color: #1d1d1f !important;
+}
+
+/* Checkbox and inputs */
+[data-admin-theme="light"] input[type="checkbox"] { border-color: rgba(0,0,0,0.2); }
+[data-admin-theme="light"] select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); }
+
+/* Light Theme Recharts Fixes */
+[data-admin-theme="light"] .recharts-text { fill: #1d1d1f !important; stroke: none !important; opacity: 0.7; font-weight: 500; }
+[data-admin-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-admin-theme="light"] .recharts-cartesian-grid-vertical line { stroke: rgba(0,0,0,0.06) !important; }
+
+/* Light Theme Borders */
+[data-admin-theme="light"] .border-white\/\[0\.12\] { border-color: rgba(0,0,0,0.15) !important; }
+[data-admin-theme="light"] .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.12) !important; }
+[data-admin-theme="light"] .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.1) !important; }
+[data-admin-theme="light"] .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.08) !important; }
+[data-admin-theme="light"] .border-white\/\[0\.03\] { border-color: rgba(0,0,0,0.06) !important; }
+[data-admin-theme="light"] .border-white\/\[0\.02\] { border-color: rgba(0,0,0,0.04) !important; }
+
+/* Light Theme Backgrounds */
+[data-admin-theme="light"] .bg-white\/\[0\.1\] { background-color: rgba(0,0,0,0.1) !important; }
+[data-admin-theme="light"] .bg-white\/\[0\.08\] { background-color: rgba(0,0,0,0.08) !important; }
+[data-admin-theme="light"] .bg-white\/\[0\.06\] { background-color: rgba(0,0,0,0.06) !important; }
+[data-admin-theme="light"] .bg-white\/\[0\.04\] { background-color: rgba(0,0,0,0.04) !important; }
+[data-admin-theme="light"] .bg-white\/\[0\.03\] { background-color: rgba(0,0,0,0.03) !important; }
+[data-admin-theme="light"] .bg-white\/\[0\.02\] { background-color: rgba(0,0,0,0.02) !important; }
+
+/* Light Theme Hover States */
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.1\]:hover { background-color: rgba(0,0,0,0.1) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.08\]:hover { background-color: rgba(0,0,0,0.08) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(0,0,0,0.06) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.04) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.03\]:hover { background-color: rgba(0,0,0,0.03) !important; }
+[data-admin-theme="light"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0,0,0,0.02) !important; }
+[data-admin-theme="light"] .hover\:text-white:hover:not(.bg-red-600):not(.bg-indigo-600) { color: #1d1d1f !important; }
+[data-admin-theme="light"] .hover\:border-white\/\[0\.12\]:hover { border-color: rgba(0,0,0,0.15) !important; }
