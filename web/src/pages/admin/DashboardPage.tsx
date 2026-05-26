@@ -9,7 +9,6 @@ import {
   TrendingDown,
   ArrowUpRight,
   AlertTriangle,
-  Eye,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartCard } from '@components/admin/ChartCard';
@@ -41,7 +40,7 @@ const statColors = {
 export const DashboardPage: React.FC = () => {
   const stats = Object.values(dashboardStats);
   const recentOrders = orders.slice(0, 5);
-  const maxRevenue = Math.max(...revenueChartData.map(d => d.revenue));
+
 
   return (
     <div className="space-y-6">

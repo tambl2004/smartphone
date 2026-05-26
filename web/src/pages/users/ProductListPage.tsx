@@ -24,15 +24,19 @@ export const ProductListPage: React.FC = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCategory(params.get('category') || undefined);
     const searchVal = params.get('search');
     if (searchVal) {
+       
       setBrand(undefined);
+       
       setPriceRange({ min: 0, max: 100000000 });
     }
   }, [path]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
     const searchVal = new URLSearchParams(window.location.search).get('search') || undefined;
 

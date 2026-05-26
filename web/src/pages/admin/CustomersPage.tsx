@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, UserPlus, Lock, Unlock, Mail, Phone, ShoppingBag, Users as UsersIcon, X, Package, Calendar } from 'lucide-react';
+import { Search, UserPlus, Lock, Unlock, Mail, Phone, ShoppingBag, Users as UsersIcon, X, Package, Calendar, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { StatusBadge } from '@components/admin/StatusBadge';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
@@ -10,6 +10,7 @@ import type { Customer } from '@data/adminData';
 export const CustomersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [lockTarget, setLockTarget] = useState<Customer | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -72,51 +73,121 @@ export const CustomersPage: React.FC = () => {
             </button>
           ))}
         </div>
+        <div className="hidden sm:flex items-center gap-1 bg-white/[0.02] p-1 rounded-lg border border-white/[0.06] ml-auto">
+          <button onClick={() => setViewMode('grid')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'grid' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+            <LayoutGrid size={15} />
+          </button>
+          <button onClick={() => setViewMode('table')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'table' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+            <List size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Customer Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((customer, index) => (
-          <motion.div key={customer.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }}
-            className="bg-[#141414] border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all group">
-            <div className="flex items-start gap-4">
-              <img src={customer.avatar} alt={customer.name} className="w-12 h-12 rounded-full object-cover" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white truncate">{customer.name}</h3>
-                  <StatusBadge status={customer.status} />
+      {/* Content View */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((customer, index) => (
+            <motion.div key={customer.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }}
+              className="bg-[#141414] border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all group">
+              <div className="flex items-start gap-4">
+                <img src={customer.avatar} alt={customer.name} className="w-12 h-12 rounded-full object-cover" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-white truncate">{customer.name}</h3>
+                    <StatusBadge status={customer.status} />
+                  </div>
+                  <p className="text-xs text-white/40 mt-1 flex items-center gap-1"><Mail size={11} />{customer.email}</p>
+                  <p className="text-xs text-white/40 mt-0.5 flex items-center gap-1"><Phone size={11} />{customer.phone}</p>
                 </div>
-                <p className="text-xs text-white/40 mt-1 flex items-center gap-1"><Mail size={11} />{customer.email}</p>
-                <p className="text-xs text-white/40 mt-0.5 flex items-center gap-1"><Phone size={11} />{customer.phone}</p>
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/[0.04]">
-              <div className="text-center">
-                <p className="text-lg font-bold text-white">{customer.totalOrders}</p>
-                <p className="text-[10px] text-white/30 mt-0.5">Đơn hàng</p>
+              <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/[0.04]">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-white">{customer.totalOrders}</p>
+                  <p className="text-[10px] text-white/30 mt-0.5">Đơn hàng</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-emerald-400">{(customer.totalSpent / 1000000).toFixed(0)}tr</p>
+                  <p className="text-[10px] text-white/30 mt-0.5">Đã chi</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-white/60">{new Date(customer.lastOrder).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
+                  <p className="text-[10px] text-white/30 mt-0.5">Đơn cuối</p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-emerald-400">{(customer.totalSpent / 1000000).toFixed(0)}tr</p>
-                <p className="text-[10px] text-white/30 mt-0.5">Đã chi</p>
+              <div className="flex items-center gap-2 mt-4">
+                <button onClick={() => setHistoryCustomer(customer)}
+                  className="flex-1 h-8 flex items-center justify-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none">
+                  <ShoppingBag size={12} /> Lịch sử
+                </button>
+                <button onClick={() => setLockTarget(customer)}
+                  className={`flex-1 h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs transition-all outline-none border-none ${customer.status === 'active' ? 'bg-red-500/[0.08] text-red-400 hover:bg-red-500/[0.15]' : 'bg-emerald-500/[0.08] text-emerald-400 hover:bg-emerald-500/[0.15]'}`}>
+                  {customer.status === 'active' ? <><Lock size={12} /> Khóa</> : <><Unlock size={12} /> Mở khóa</>}
+                </button>
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-white/60">{new Date(customer.lastOrder).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</p>
-                <p className="text-[10px] text-white/30 mt-0.5">Đơn cuối</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-4">
-              <button onClick={() => setHistoryCustomer(customer)}
-                className="flex-1 h-8 flex items-center justify-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none">
-                <ShoppingBag size={12} /> Lịch sử
-              </button>
-              <button onClick={() => setLockTarget(customer)}
-                className={`flex-1 h-8 flex items-center justify-center gap-1.5 rounded-lg text-xs transition-all outline-none border-none ${customer.status === 'active' ? 'bg-red-500/[0.08] text-red-400 hover:bg-red-500/[0.15]' : 'bg-emerald-500/[0.08] text-emerald-400 hover:bg-emerald-500/[0.15]'}`}>
-                {customer.status === 'active' ? <><Lock size={12} /> Khóa</> : <><Unlock size={12} /> Mở khóa</>}
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Khách hàng</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Liên hệ</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Đơn hàng</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Đã chi</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {filtered.map((customer) => (
+                  <tr key={customer.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img src={customer.avatar} alt={customer.name} className="w-10 h-10 rounded-full object-cover" />
+                        <div>
+                          <p className="text-sm font-medium text-white">{customer.name}</p>
+                          <p className="text-xs text-white/40 mt-0.5">Tham gia: {new Date(customer.joinDate).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="space-y-1">
+                        <p className="text-xs text-white/60 flex items-center gap-1.5"><Mail size={12} className="opacity-50" /> {customer.email}</p>
+                        <p className="text-xs text-white/60 flex items-center gap-1.5"><Phone size={12} className="opacity-50" /> {customer.phone}</p>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <p className="text-sm font-medium text-white">{customer.totalOrders}</p>
+                      <p className="text-[10px] text-white/40 mt-0.5">{new Date(customer.lastOrder).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} (Đơn cuối)</p>
+                    </td>
+                    <td className="p-4 text-right text-emerald-400 font-medium">
+                      {formatCurrency(customer.totalSpent)}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center">
+                        <StatusBadge status={customer.status} />
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setHistoryCustomer(customer)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none border-none" title="Lịch sử">
+                          <ShoppingBag size={14} />
+                        </button>
+                        <button onClick={() => setLockTarget(customer)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all outline-none border-none ${customer.status === 'active' ? 'bg-red-500/[0.08] text-red-400 hover:bg-red-500/[0.15]' : 'bg-emerald-500/[0.08] text-emerald-400 hover:bg-emerald-500/[0.15]'}`} title={customer.status === 'active' ? 'Khóa' : 'Mở khóa'}>
+                          {customer.status === 'active' ? <Lock size={14} /> : <Unlock size={14} />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="py-16 text-center"><UsersIcon size={40} className="opacity-10 mx-auto mb-3" /><p className="text-sm opacity-30">Không tìm thấy khách hàng nào</p></div>

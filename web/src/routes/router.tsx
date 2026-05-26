@@ -10,6 +10,7 @@ const RouterContext = createContext<RouterContextType>({
   navigate: () => {},
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRouter = () => useContext(RouterContext);
 
 export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -91,6 +92,7 @@ export const Route: React.FC<{
   return null;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useParams = (routePattern: string): Record<string, string> => {
   const currentPath = window.location.pathname;
   const routeParts = routePattern.split('/');

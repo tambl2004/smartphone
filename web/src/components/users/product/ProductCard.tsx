@@ -6,7 +6,7 @@ import { formatPrice } from '@utils/format';
 import { getDiscountPercentage } from '@utils/helpers';
 import { useCart } from '@hooks/useCart';
 import { useWishlist } from '@hooks/useWishlist';
-import { Link } from '@routes/router';
+import { Link, useRouter } from '@routes/router';
 import { Heart, Eye, ShoppingCart, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -16,6 +16,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
+  const { navigate } = useRouter();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const isWish = isInWishlist(product.id);
@@ -74,7 +75,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             <Button
               variant="secondary"
               className="flex-none px-0 w-11"
-              onClick={() => onQuickView?.(product)}
+              onClick={() => onQuickView ? onQuickView(product) : navigate(`/product/${product.id}`)}
             >
               <Eye size={18} />
             </Button>

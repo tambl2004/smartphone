@@ -1,6 +1,6 @@
-import { Suspense, useState, useEffect, useRef, useCallback, memo } from 'react';
+import { Suspense, useState, useEffect, useRef, memo } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Environment } from '@react-three/drei';
 import { Model } from './Model';
 
 // Lightweight loading placeholder that shows immediately

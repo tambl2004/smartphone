@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ChartCard } from '@components/admin/ChartCard';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
 
 const initialBanners = [
@@ -13,9 +12,10 @@ const initialBanners = [
 
 export const ContentBannersPage: React.FC = () => {
   const [banners, setBanners] = useState(initialBanners);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string; [key: string]: unknown } | null>(null);
   
   const [formData, setFormData] = useState({ title: '', image: '', position: 'Hero Banner', status: 'active' });
 
@@ -25,7 +25,7 @@ export const ContentBannersPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const openEdit = (b: any) => {
+  const openEdit = (b: {id: number; title: string; image: string; position: string; status: string; [key: string]: unknown}) => {
     setEditingId(b.id);
     setFormData({ title: b.title, image: b.image, position: b.position, status: b.status });
     setIsModalOpen(true);
@@ -57,33 +57,91 @@ export const ContentBannersPage: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight">Quản lý Banner</h1>
           <p className="text-sm opacity-40 mt-1">Danh sách banner trang chủ và quảng cáo</p>
         </div>
-        <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
-          <Plus size={14} /> Thêm banner
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-1 bg-white/[0.02] p-1 rounded-lg border border-white/[0.06]">
+            <button onClick={() => setViewMode('grid')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'grid' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+              <LayoutGrid size={15} />
+            </button>
+            <button onClick={() => setViewMode('table')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'table' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+              <List size={15} />
+            </button>
+          </div>
+          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
+            <Plus size={14} /> Thêm banner
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {banners.map((banner, i) => (
-          <motion.div key={banner.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="rounded-xl overflow-hidden border border-white/[0.06] group relative">
-            <div className="relative aspect-video">
-              <img src={banner.image} alt={banner.title} className="w-full h-full object-cover bg-white/[0.02]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-sm font-semibold text-white force-white truncate">{banner.title}</p>
-                <p className="text-xs text-white/80 force-white mt-0.5">{banner.position}</p>
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {banners.map((banner, i) => (
+            <motion.div key={banner.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              className="rounded-xl overflow-hidden border border-white/[0.06] group relative">
+              <div className="relative aspect-video">
+                <img src={banner.image} alt={banner.title} className="w-full h-full object-cover bg-white/[0.02]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-sm font-semibold text-white force-white truncate">{banner.title}</p>
+                  <p className="text-xs text-white/80 force-white mt-0.5">{banner.position}</p>
+                </div>
+                <div className="absolute top-2 right-2 flex gap-1.5 transition-opacity">
+                  <button onClick={() => openEdit(banner)} className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-md flex items-center justify-center text-white opacity-70 hover:opacity-100 force-white transition-all border-none outline-none"><Edit2 size={14} /></button>
+                  <button onClick={() => setDeleteTarget(banner)} className="w-8 h-8 rounded-lg bg-red-500/80 backdrop-blur-md flex items-center justify-center text-white force-white hover:bg-red-600 transition-all border-none outline-none"><Trash2 size={14} /></button>
+                </div>
+                <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-medium ${banner.status === 'active' ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-black/50 text-white/70'}`}>
+                  {banner.status === 'active' ? 'Hiển thị' : 'Nháp'}
+                </span>
               </div>
-              <div className="absolute top-2 right-2 flex gap-1.5 transition-opacity">
-                <button onClick={() => openEdit(banner)} className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-md flex items-center justify-center text-white opacity-70 hover:opacity-100 force-white transition-all border-none outline-none"><Edit2 size={14} /></button>
-                <button onClick={() => setDeleteTarget(banner)} className="w-8 h-8 rounded-lg bg-red-500/80 backdrop-blur-md flex items-center justify-center text-white force-white hover:bg-red-600 transition-all border-none outline-none"><Trash2 size={14} /></button>
-              </div>
-              <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-medium ${banner.status === 'active' ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-black/50 text-white/70'}`}>
-                {banner.status === 'active' ? 'Hiển thị' : 'Nháp'}
-              </span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Banner</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Vị trí</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {banners.map((banner) => (
+                  <tr key={banner.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-20 h-12 rounded overflow-hidden">
+                          <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">{banner.title}</p>
+                          <p className="text-xs text-white/40 mt-0.5">Tạo: {new Date(banner.createdAt).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-sm text-white/80">{banner.position}</p>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${banner.status === 'active' ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-black/50 text-white/70'}`}>
+                        {banner.status === 'active' ? 'Hiển thị' : 'Nháp'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(banner)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none border-none"><Edit2 size={14} /></button>
+                        <button onClick={() => setDeleteTarget(banner)} className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-500/[0.08] hover:bg-red-500/[0.15] transition-all outline-none border-none"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       <AnimatePresence>

@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/users/product/ProductCard';
 import { ProductQuickView } from '@/components/users/product/ProductQuickView';
 import { Link, useRouter } from '@routes/router';
 import { motion } from 'motion/react';
-import { ArrowRight, Truck, ShieldCheck, CreditCard, RefreshCw, Star, Clock, Phone, Zap, ChevronDown, ChevronUp, Smartphone, Tablet, Headphones } from 'lucide-react';
+import { ArrowRight, Truck, ShieldCheck, CreditCard, RefreshCw, Star, Clock, Zap, ChevronDown, ChevronUp, Smartphone, Tablet, Headphones } from 'lucide-react';
 
 // Lazy load 3D viewer - splits Three.js (~600KB) into separate chunk
 const Hero3DViewer = lazy(() =>

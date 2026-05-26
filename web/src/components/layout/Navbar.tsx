@@ -52,11 +52,11 @@ export const Navbar: React.FC = () => {
             <Link to="/products" className="hover:text-black dark:hover:text-white transition-colors">
               Sản phẩm
             </Link>
-            <Link to="/products?category=apple" className="hover:text-black dark:hover:text-white transition-colors">
+            <Link to="/news" className="hover:text-black dark:hover:text-white transition-colors">
               Tin tức
             </Link>
-            <Link to="/products?category=samsung" className="hover:text-black dark:hover:text-white transition-colors">
-              Giới thiệu
+            <Link to="/contact" className="hover:text-black dark:hover:text-white transition-colors">
+              Liên hệ
             </Link>
           </div>
 
@@ -128,8 +128,8 @@ export const Navbar: React.FC = () => {
 
                 <Link to="/" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Trang chủ</Link>
                 <Link to="/products" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Sản phẩm</Link>
-                <Link to="/products?category=apple" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Tin tức</Link>
-                <Link to="/products?category=samsung" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2">Giới thiệu</Link>
+                <Link to="/news" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Tin tức</Link>
+                <Link to="/contact" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2">Liên hệ</Link>
               </div>
             </motion.div>
           )}

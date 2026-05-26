@@ -7,6 +7,9 @@ import { ProductDetailPage } from '@pages/users/ProductDetailPage';
 import { CartPage } from '@pages/users/CartPage';
 import { CheckoutPage } from '@pages/users/CheckoutPage';
 import { WishlistPage } from '@pages/users/WishlistPage';
+import { NewsPage } from '@pages/users/NewsPage';
+import { NewsDetailPage } from '@pages/users/NewsDetailPage';
+import { ContactPage } from '@pages/users/ContactPage';
 import { NotFoundPage } from '@pages/users/NotFoundPage';
 import { LoginPage } from '@pages/auth/Login';
 import { RegisterPage } from '@pages/auth/Register';
@@ -15,10 +18,10 @@ import { DashboardPage } from '@pages/admin/DashboardPage';
 import { ProductsPage } from '@pages/admin/ProductsPage';
 import { OrdersPage } from '@pages/admin/OrdersPage';
 import { CustomersPage } from '@pages/admin/CustomersPage';
-import { ContentBannersPage } from '@pages/admin/content/BannersPage';
-import { ContentPromotionsPage } from '@pages/admin/content/PromotionsPage';
-import { ContentCategoriesPage } from '@pages/admin/content/CategoriesPage';
-import { ContentBrandsPage } from '@pages/admin/content/BrandsPage';
+import { ContentBannersPage } from '@pages/admin/BannersPage';
+import { ContentPromotionsPage } from '@pages/admin/PromotionsPage';
+import { ContentCategoriesPage } from '@pages/admin/CategoriesPage';
+import { ContentBrandsPage } from '@pages/admin/BrandsPage';
 import { ReportsPage } from '@pages/admin/ReportsPage';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
@@ -61,9 +64,10 @@ function AppContent() {
   }
 
   // Kiểm tra xem path hiện tại có hợp lệ không
-  const routes = ['/', '/products', '/cart', '/checkout', '/wishlist'];
+  const routes = ['/', '/products', '/cart', '/checkout', '/wishlist', '/news', '/contact'];
   const isDetailRoute = basePath.startsWith('/product/') && basePath.split('/').length === 3;
-  const isKnownRoute = routes.includes(basePath) || isDetailRoute;
+  const isNewsDetailRoute = basePath.startsWith('/news/') && basePath.split('/').length === 3;
+  const isKnownRoute = routes.includes(basePath) || isDetailRoute || isNewsDetailRoute;
 
   return (
     <MainLayout>
@@ -73,6 +77,9 @@ function AppContent() {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/news" element={<NewsPage />} />
+      <Route path="/news/:slug" element={<NewsDetailPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       {!isKnownRoute && <NotFoundPage />}
     </MainLayout>
   );

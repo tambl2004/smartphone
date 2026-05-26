@@ -10,6 +10,31 @@ import type { AdminProduct } from '@data/adminData';
 
 type ModalType = 'add' | 'edit' | 'view' | 'import' | 'export' | null;
 
+const ModalWrapper: React.FC<{ children: React.ReactNode; maxW?: string; onClose: () => void }> = ({ children, maxW = 'max-w-lg', onClose }) => (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={onClose}>
+    <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+      className={`bg-[#1A1A1A] border border-white/[0.08] rounded-2xl w-full ${maxW} max-h-[85vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
+      {children}
+    </motion.div>
+  </motion.div>
+);
+
+const ModalHeader: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
+  <div className="flex items-center justify-between p-5 border-b border-white/[0.06] sticky top-0 bg-[#1A1A1A] z-10">
+    <h3 className="text-lg font-semibold text-white">{title}</h3>
+    <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-all border-none outline-none"><X size={16} /></button>
+  </div>
+);
+
+const InputField: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }> = ({ label, value, onChange, type = 'text', placeholder }) => (
+  <div>
+    <label className="block text-xs font-medium text-white/40 mb-1.5">{label}</label>
+    <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50 transition-all" />
+  </div>
+);
+
 export const ProductsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -67,31 +92,7 @@ export const ProductsPage: React.FC = () => {
     setModalType(null);
   };
 
-  // Shared modal backdrop
-  const ModalWrapper: React.FC<{ children: React.ReactNode; maxW?: string }> = ({ children, maxW = 'max-w-lg' }) => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setModalType(null)}>
-      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className={`bg-[#1A1A1A] border border-white/[0.08] rounded-2xl w-full ${maxW} max-h-[85vh] overflow-y-auto`} onClick={e => e.stopPropagation()}>
-        {children}
-      </motion.div>
-    </motion.div>
-  );
-
-  const ModalHeader: React.FC<{ title: string }> = ({ title }) => (
-    <div className="flex items-center justify-between p-5 border-b border-white/[0.06] sticky top-0 bg-[#1A1A1A] z-10">
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <button onClick={() => setModalType(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-all border-none outline-none"><X size={16} /></button>
-    </div>
-  );
-
-  const InputField: React.FC<{ label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }> = ({ label, value, onChange, type = 'text', placeholder }) => (
-    <div>
-      <label className="block text-xs font-medium text-white/40 mb-1.5">{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder:text-white/20 outline-none focus:border-indigo-500/50 transition-all" />
-    </div>
-  );
+  // Shared components moved outside
 
   return (
     <div className="space-y-6">
@@ -184,8 +185,8 @@ export const ProductsPage: React.FC = () => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {(modalType === 'add' || modalType === 'edit') && (
-          <ModalWrapper>
-            <ModalHeader title={modalType === 'add' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'} />
+          <ModalWrapper onClose={() => setModalType(null)}>
+            <ModalHeader title={modalType === 'add' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'} onClose={() => setModalType(null)} />
             <div className="p-5 space-y-4">
               <InputField label="Tên sản phẩm" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="VD: iPhone 16 Pro Max 256GB" />
               <div className="grid grid-cols-2 gap-3">
@@ -230,8 +231,8 @@ export const ProductsPage: React.FC = () => {
       {/* View Modal */}
       <AnimatePresence>
         {modalType === 'view' && currentProduct && (
-          <ModalWrapper>
-            <ModalHeader title="Chi tiết sản phẩm" />
+          <ModalWrapper onClose={() => setModalType(null)}>
+            <ModalHeader title="Chi tiết sản phẩm" onClose={() => setModalType(null)} />
             <div className="p-5 space-y-4">
               <div className="flex gap-4">
                 <img src={currentProduct.image} alt="" className="w-24 h-24 rounded-xl object-cover" />
@@ -264,8 +265,8 @@ export const ProductsPage: React.FC = () => {
       {/* Import Modal */}
       <AnimatePresence>
         {modalType === 'import' && (
-          <ModalWrapper maxW="max-w-md">
-            <ModalHeader title="Import sản phẩm" />
+          <ModalWrapper maxW="max-w-md" onClose={() => setModalType(null)}>
+            <ModalHeader title="Import sản phẩm" onClose={() => setModalType(null)} />
             <div className="p-5 space-y-4">
               <div className="border-2 border-dashed border-white/[0.1] rounded-xl p-8 text-center hover:border-indigo-500/30 transition-colors cursor-pointer">
                 <FileSpreadsheet size={40} className="text-white/20 mx-auto mb-3" />
@@ -289,8 +290,8 @@ export const ProductsPage: React.FC = () => {
       {/* Export Modal */}
       <AnimatePresence>
         {modalType === 'export' && (
-          <ModalWrapper maxW="max-w-md">
-            <ModalHeader title="Export sản phẩm" />
+          <ModalWrapper maxW="max-w-md" onClose={() => setModalType(null)}>
+            <ModalHeader title="Export sản phẩm" onClose={() => setModalType(null)} />
             <div className="p-5 space-y-4">
               <p className="text-sm text-white/60">Chọn định dạng xuất dữ liệu:</p>
               {[

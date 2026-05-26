@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Save, Smartphone, Laptop, Headphones, Watch } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Save, Smartphone, Laptop, Headphones, Watch, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
 
@@ -13,9 +13,10 @@ const initialCategories = [
 
 export const ContentCategoriesPage: React.FC = () => {
   const [categories, setCategories] = useState(initialCategories);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string; [key: string]: unknown } | null>(null);
   
   const [formData, setFormData] = useState({ name: '', icon: 'Smartphone' });
 
@@ -34,7 +35,7 @@ export const ContentCategoriesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const openEdit = (c: any) => {
+  const openEdit = (c: { id: number; name: string; icon: string; count: number; [key: string]: unknown }) => {
     setEditingId(c.id);
     setFormData({ name: c.name, icon: c.icon });
     setIsModalOpen(true);
@@ -66,32 +67,81 @@ export const ContentCategoriesPage: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight">Danh mục sản phẩm</h1>
           <p className="text-sm opacity-40 mt-1">Quản lý các danh mục chính của cửa hàng</p>
         </div>
-        <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
-          <Plus size={14} /> Thêm danh mục
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-1 bg-white/[0.02] p-1 rounded-lg border border-white/[0.06]">
+            <button onClick={() => setViewMode('grid')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'grid' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+              <LayoutGrid size={15} />
+            </button>
+            <button onClick={() => setViewMode('table')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'table' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
+              <List size={15} />
+            </button>
+          </div>
+          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
+            <Plus size={14} /> Thêm danh mục
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {categories.map((cat, i) => (
-          <motion.div key={cat.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-            className="p-4 rounded-2xl bg-[#141414] border border-white/[0.06] hover:border-white/[0.12] transition-all flex items-center justify-between group">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
-                {getIcon(cat.icon)}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {categories.map((cat, i) => (
+            <motion.div key={cat.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              className="p-4 rounded-2xl bg-[#141414] border border-white/[0.06] hover:border-white/[0.12] transition-all flex items-center justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
+                  {getIcon(cat.icon)}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">{cat.name}</h3>
+                  <p className="text-xs opacity-50 mt-0.5">{cat.count} sản phẩm</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold">{cat.name}</h3>
-                <p className="text-xs opacity-50 mt-0.5">{cat.count} sản phẩm</p>
+              
+              <div className="flex flex-col gap-1 transition-opacity">
+                <button onClick={() => openEdit(cat)} className="w-6 h-6 rounded flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-white/[0.1] transition-all border-none outline-none"><Edit2 size={12} /></button>
+                <button onClick={() => setDeleteTarget(cat)} className="w-6 h-6 rounded flex items-center justify-center text-red-500 opacity-50 hover:opacity-100 hover:bg-red-500/20 transition-all border-none outline-none"><Trash2 size={12} /></button>
               </div>
-            </div>
-            
-            <div className="flex flex-col gap-1 transition-opacity">
-              <button onClick={() => openEdit(cat)} className="w-6 h-6 rounded flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-white/[0.1] transition-all border-none outline-none"><Edit2 size={12} /></button>
-              <button onClick={() => setDeleteTarget(cat)} className="w-6 h-6 rounded flex items-center justify-center text-red-500 opacity-50 hover:opacity-100 hover:bg-red-500/20 transition-all border-none outline-none"><Trash2 size={12} /></button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Danh mục</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Sản phẩm</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {categories.map((cat) => (
+                  <tr key={cat.id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
+                          {getIcon(cat.icon)}
+                        </div>
+                        <p className="text-sm font-medium text-white">{cat.name}</p>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <p className="text-sm text-white/80">{cat.count}</p>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(cat)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none border-none"><Edit2 size={14} /></button>
+                        <button onClick={() => setDeleteTarget(cat)} className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-500/[0.08] hover:bg-red-500/[0.15] transition-all outline-none border-none"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       <AnimatePresence>

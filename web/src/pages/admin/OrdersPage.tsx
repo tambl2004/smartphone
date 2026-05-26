@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, Eye, X, MapPin, Phone, Mail, CreditCard, Clock, Package as PackageIcon } from 'lucide-react';
+import { Search, Eye, X, MapPin, Phone, Mail, CreditCard } from 'lucide-react';
 import { ChartCard } from '@components/admin/ChartCard';
 import { StatusBadge } from '@components/admin/StatusBadge';
 import { orders, formatCurrency } from '@data/adminData';
-import type { Order, OrderStatus } from '@data/adminData';
+import type { Order } from '@data/adminData';
 
 export const OrdersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');

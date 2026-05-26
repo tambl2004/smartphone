@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Download, Calendar, Check, X } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Package, Download, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { ChartCard } from '@components/admin/ChartCard';
-import { formatCurrency, formatCompactNumber, revenueChartData } from '@data/adminData';
+import { formatCurrency, formatCompactNumber } from '@data/adminData';
 
 const monthlyReport = [
   { month: 'Tháng 1', revenue: 1850000000, orders: 845, customers: 312, returns: 12 },
@@ -42,7 +42,7 @@ export const ReportsPage: React.FC = () => {
   const totalRevenue = monthlyReport.reduce((a, b) => a + b.revenue, 0);
   const totalOrders = monthlyReport.reduce((a, b) => a + b.orders, 0);
   const totalCustomers = monthlyReport.reduce((a, b) => a + b.customers, 0);
-  const maxMonthRevenue = Math.max(...monthlyReport.map(m => m.revenue));
+
 
   const handleExport = () => {
     toast.success('Báo cáo đã được xuất thành công! Đang tải xuống...');
@@ -138,7 +138,7 @@ export const ReportsPage: React.FC = () => {
                     dataKey="revenue"
                     stroke="none"
                   >
-                    {categoryReport.map((entry, index) => {
+                    {categoryReport.map((_, index) => {
                       const colors = ['#6366f1', '#a855f7', '#ec4899', '#f59e0b'];
                       return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                     })}

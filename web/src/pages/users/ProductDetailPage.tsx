@@ -23,6 +23,7 @@ export const ProductDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
     mockApi.getProductById(id).then((prod: Product | null) => {
       if (prod) {
