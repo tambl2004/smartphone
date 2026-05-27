@@ -11,6 +11,7 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log(`Backend server is running at http://localhost:${PORT}`);
+    console.log(`API docs available at http://localhost:${PORT}/api-docs`);
   });
 };
 

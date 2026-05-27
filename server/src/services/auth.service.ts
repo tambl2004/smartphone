@@ -1,26 +1,37 @@
+import jwt, { type SignOptions } from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { findUserByEmail } from '../models/user.model.js';
+import type { LoginResponseData } from '../types/auth.js';
 
-export type LoginInput = {
-  email: string;
-  password: string;
-};
+const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret';
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ?? '7d') as SignOptions['expiresIn'];
 
-export const loginUser = async (input: LoginInput) => {
-  const user = await findUserByEmail(input.email);
+export const loginUser = async ({ email, password }: { email: string; password: string }): Promise<LoginResponseData | null> => {
+  const user = await findUserByEmail(email);
 
   if (!user) {
     return null;
   }
 
-  const isPasswordValid = user.password === input.password;
-
-  if (!isPasswordValid) {
+  const isValid = await bcrypt.compare(password, user.passwordHash);
+  if (!isValid) {
     return null;
   }
 
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN },
+  );
+
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
+    token,
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    },
   };
 };

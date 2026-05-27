@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { loginUser } from '../services/auth.service.js';
+import { sendError, sendSuccess } from '../utils/api-response.js';
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body as {
@@ -8,21 +9,17 @@ export const login = async (req: Request, res: Response) => {
   };
 
   if (!email || !password) {
-    return res.status(400).json({
-      message: 'Email and password are required',
-    });
+    return sendError(res, 400, 'Email and password are required', [
+      { field: 'email', message: 'email is required' },
+      { field: 'password', message: 'password is required' },
+    ]);
   }
 
-  const user = await loginUser({ email, password });
+  const result = await loginUser({ email, password });
 
-  if (!user) {
-    return res.status(401).json({
-      message: 'Invalid credentials',
-    });
+  if (!result) {
+    return sendError(res, 401, 'Invalid credentials');
   }
 
-  return res.status(200).json({
-    message: 'Login successful',
-    user,
-  });
+  return sendSuccess(res, 200, 'Login successful', result);
 };

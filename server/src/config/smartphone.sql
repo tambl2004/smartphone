@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'staff', 'customer') NOT NULL DEFAULT 'customer',
+    role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     phone VARCHAR(20) NULL,
     avatar_url VARCHAR(500) NULL,
     status ENUM('active', 'blocked') NOT NULL DEFAULT 'active',
@@ -267,28 +267,29 @@ CREATE TABLE IF NOT EXISTS stores (
 -- Seed data from web/src/data
 INSERT INTO categories (id, slug, name, icon) VALUES
 (1, 'smartphones', 'Điện thoại', '📱'),
-(2, 'tablets', 'Máy tính bảng', '平板'),
+(2, 'tablets', 'Máy tính bảng', '📱'),
 (3, 'accessories', 'Phụ kiện', '🎧')
-ON DUPLICATE KEY UPDATE name = VALUES(name), icon = VALUES(icon);
+ON DUPLICATE KEY UPDATE slug = VALUES(slug), name = VALUES(name), icon = VALUES(icon);
 
 INSERT INTO brands (id, slug, name) VALUES
 (1, 'apple', 'Apple'),
 (2, 'samsung', 'Samsung'),
 (3, 'xiaomi', 'Xiaomi'),
-(4, 'oppo', 'OPPO')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+(4, 'oppo', 'OPPO'),
+(5, 'sony', 'Sony')
+ON DUPLICATE KEY UPDATE slug = VALUES(slug), name = VALUES(name);
 
 INSERT INTO products (id, slug, name, category_id, brand_id, price, original_price, discount_percent, rating, reviews_count, stock, description, featured, status) VALUES
 (1, 'iphone-15-pro-max', 'iPhone 15 Pro Max 256GB', 1, 1, 29990000, 34990000, 14, 4.80, 128, 15, 'iPhone 15 Pro Max có thiết kế titan chuẩn hàng không vũ trụ bền bỉ, nhẹ nhàng. Nút Tác vụ (Action Button) hoàn toàn mới giúp cá nhân hóa phím tắt tiện lợi.', 1, 'active'),
 (2, 'samsung-galaxy-s24-ultra', 'Samsung Galaxy S24 Ultra 256GB', 1, 2, 28990000, 33990000, 15, 4.90, 95, 20, 'Galaxy S24 Ultra đánh dấu kỷ nguyên mới của AI di động (Galaxy AI). Thiết kế khung viền Titan sang trọng và bút S Pen tiện lợi.', 1, 'active'),
 (3, 'xiaomi-14-ultra', 'Xiaomi 14 Ultra 512GB', 1, 3, 26990000, 29990000, 10, 4.70, 42, 8, 'Xiaomi 14 Ultra sở hữu ống kính quang học Leica thế hệ mới cùng cảm biến lớn 1-inch, đem lại chất lượng hình ảnh nghệ thuật đỉnh cao.', 1, 'active'),
-(4, 'ipad-pro-m4-11', 'iPad Pro M4 11-inch Wifi 256GB', 2, 1, 26490000, 28990000, 8, 4.90, 35, 12, 'iPad Pro M4 có thiết kế siêu mỏng đột phá cùng màn hình Ultra Retina XDR sử dụng công nghệ OLED hai lớp tiên tiến, kết hợp sức mạnh phi thường của chip M4.', 0, 'active'),
-(5, 'oppo-find-n3-flip', 'OPPO Find N3 Flip 256GB', 1, 4, 19990000, 22990000, 13, 4.60, 29, 10, 'OPPO Find N3 Flip nâng tầm điện thoại gập với bộ 3 camera Hasselblad đẳng cấp cùng màn hình ngoài đa chức năng nâng cấp vô cùng trực quan.', 0, 'active'),
-(6, 'airpods-pro-2', 'AirPods Pro (Gen 2)', 3, 1, 5990000, 6990000, 14, 4.80, 215, 50, 'Tai nghe AirPods Pro thế hệ 2 với khả năng chống ồn chủ động xuất sắc, xuyên âm tự nhiên và âm thanh không gian sống động.', 1, 'active'),
-(7, 'galaxy-tab-s9-ultra', 'Samsung Galaxy Tab S9 Ultra 5G 256GB', 2, 2, 29990000, 32990000, 9, 4.90, 42, 15, 'Máy tính bảng cao cấp nhất của Samsung với màn hình khổng lồ, hiệu năng mạnh mẽ và bút S Pen đi kèm.', 0, 'active'),
-(8, 'sony-wh-1000xm5', 'Tai nghe chụp tai Sony WH-1000XM5', 3, 5, 7490000, 8490000, 12, 4.70, 89, 25, 'Tai nghe chống ồn đỉnh cao từ Sony, thiết kế nhẹ nhàng, cảm giác đeo thoải mái và âm thanh độ phân giải cao Hi-Res.', 1, 'active'),
+(4, 'oppo-find-x7-ultra', 'OPPO Find X7 Ultra 512GB', 1, 4, 23990000, 26990000, 11, 4.60, 31, 12, 'OPPO Find X7 Ultra nổi bật với hệ thống camera Hasselblad, màn hình LTPO 2K và sạc nhanh siêu tốc, phù hợp người dùng yêu chụp ảnh.', 1, 'active'),
+(5, 'iphone-15', 'iPhone 15 128GB', 1, 1, 19990000, 21990000, 9, 4.80, 164, 22, 'iPhone 15 mang đến Dynamic Island, cổng USB-C và camera chính 48MP, là lựa chọn cân bằng giữa hiệu năng và giá bán.', 1, 'active'),
+(6, 'samsung-galaxy-a55', 'Samsung Galaxy A55 5G 256GB', 1, 2, 10990000, 12990000, 15, 4.50, 68, 30, 'Galaxy A55 5G có khung kim loại, màn hình Super AMOLED 120Hz và pin bền bỉ, phù hợp người dùng phổ thông.', 0, 'active'),
+(7, 'xiaomi-redmi-note-13-pro', 'Xiaomi Redmi Note 13 Pro+ 5G 256GB', 1, 3, 8990000, 9990000, 10, 4.40, 53, 25, 'Redmi Note 13 Pro+ 5G sở hữu camera 200MP, sạc nhanh 120W và thiết kế bo cong đẹp mắt.', 0, 'active'),
+(8, 'oppo-reno11-pro', 'OPPO Reno11 Pro 5G 512GB', 1, 4, 13990000, 15990000, 12, 4.60, 47, 18, 'OPPO Reno11 Pro 5G có thiết kế mỏng nhẹ, camera chân dung nổi bật và sạc nhanh SuperVOOC tiện lợi.', 0, 'active'),
 (9, 'iphone-14-pro', 'iPhone 14 Pro 128GB', 1, 1, 22990000, 25990000, 11, 4.80, 312, 40, 'iPhone 14 Pro với Dynamic Island sáng tạo, camera chính 48MP cho hình ảnh siêu sắc nét và chip A16 Bionic cực kỳ mạnh mẽ.', 0, 'active'),
-(10, 'apple-watch-series-9', 'Apple Watch Series 9 GPS 41mm', 3, 1, 9490000, 10490000, 9, 4.90, 75, 30, 'Apple Watch Series 9 sở hữu màn hình sáng gấp đôi, chip S9 SiP xử lý siêu mượt và tính năng Double Tap chạm hai lần để điều khiển thông minh.', 0, 'active')
+(10, 'samsung-galaxy-s23-fe', 'Samsung Galaxy S23 FE 256GB', 1, 2, 14990000, 16990000, 12, 4.70, 84, 20, 'Galaxy S23 FE mang trải nghiệm flagship với màn hình đẹp, camera ổn định và hiệu năng mạnh mẽ trong tầm giá.', 0, 'active')
 ON DUPLICATE KEY UPDATE
 name = VALUES(name),
 category_id = VALUES(category_id),
@@ -308,13 +309,13 @@ INSERT INTO product_images (product_id, image_url, sort_order, is_primary) VALUE
 (1, 'https://images.unsplash.com/photo-1695048133031-64d88e63a17e?w=500&auto=format&fit=crop&q=60', 1, 0),
 (2, 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60', 0, 1),
 (3, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60', 0, 1),
-(4, 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=60', 0, 1),
-(5, 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=60', 0, 1),
-(6, 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=500&auto=format&fit=crop&q=60', 0, 1),
-(7, 'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?w=500&auto=format&fit=crop&q=60', 0, 1),
-(8, 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&auto=format&fit=crop&q=60', 0, 1),
+(4, 'https://images.unsplash.com/photo-1610792516307-ea5acd9a0b41?w=500&auto=format&fit=crop&q=60', 0, 1),
+(5, 'https://images.unsplash.com/photo-1695048141972-2f4d9d0cb90b?w=500&auto=format&fit=crop&q=60', 0, 1),
+(6, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60', 0, 1),
+(7, 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=60', 0, 1),
+(8, 'https://images.unsplash.com/photo-1605236453806-6ff36851218f?w=500&auto=format&fit=crop&q=60', 0, 1),
 (9, 'https://images.unsplash.com/photo-1678685888221-cda773a3dcdb?w=500&auto=format&fit=crop&q=60', 0, 1),
-(10, 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500&auto=format&fit=crop&q=60', 0, 1)
+(10, 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=500&auto=format&fit=crop&q=60', 0, 1)
 ON DUPLICATE KEY UPDATE image_url = VALUES(image_url), sort_order = VALUES(sort_order), is_primary = VALUES(is_primary);
 
 INSERT INTO product_specs (product_id, spec_name, spec_value, sort_order) VALUES
@@ -339,34 +340,41 @@ INSERT INTO product_specs (product_id, spec_name, spec_value, sort_order) VALUES
 (3, 'Bộ nhớ trong', '512 GB', 5),
 (3, 'Camera sau', '50 MP + 50 MP + 50 MP + 50 MP', 6),
 (3, 'Pin, Sạc', '5000 mAh, 90 W', 7),
-(4, 'Màn hình', '11 inch, Ultra Retina XDR Tandem OLED', 1),
-(4, 'Hệ điều hành', 'iPadOS 17', 2),
-(4, 'Chipset', 'Apple M4 9 nhân', 3),
-(4, 'RAM', '8 GB', 4),
-(4, 'Bộ nhớ trong', '256 GB', 5),
-(4, 'Camera sau', '12 MP', 6),
-(4, 'Pin, Sạc', '31.29 Wh (~ 8160 mAh)', 7),
-(5, 'Màn hình', 'Chính: 6.8 inch, Phụ: 3.26 inch, AMOLED', 1),
-(5, 'Hệ điều hành', 'Android 13', 2),
-(5, 'Chipset', 'MediaTek Dimensity 9200 8 nhân', 3),
-(5, 'RAM', '12 GB', 4),
-(5, 'Bộ nhớ trong', '256 GB', 5),
-(5, 'Camera sau', '50 MP + 48 MP + 32 MP', 6),
-(5, 'Pin, Sạc', '4300 mAh, 44 W', 7),
-(6, 'Kết nối', 'Bluetooth 5.3', 1),
-(6, 'Thời lượng pin', '6 giờ (lên đến 30 giờ với hộp sạc)', 2),
-(6, 'Chống nước', 'IPX4', 3),
-(6, 'Tính năng', 'Chống ồn ANC, Xuyên âm', 4),
-(7, 'Màn hình', '14.6 inch, Dynamic AMOLED 2X', 1),
-(7, 'Hệ điều hành', 'Android 13', 2),
-(7, 'Chipset', 'Snapdragon 8 Gen 2 for Galaxy', 3),
+(4, 'Màn hình', '6.8 inch, LTPO AMOLED 2K', 1),
+(4, 'Hệ điều hành', 'Android 14', 2),
+(4, 'Chipset', 'Snapdragon 8 Gen 3', 3),
+(4, 'RAM', '16 GB', 4),
+(4, 'Bộ nhớ trong', '512 GB', 5),
+(4, 'Camera sau', '50 MP + 50 MP + 50 MP + 50 MP', 6),
+(4, 'Pin, Sạc', '5000 mAh, 100 W', 7),
+(5, 'Màn hình', '6.1 inch, Super Retina XDR OLED', 1),
+(5, 'Hệ điều hành', 'iOS 17', 2),
+(5, 'Chipset', 'Apple A16 Bionic', 3),
+(5, 'RAM', '6 GB', 4),
+(5, 'Bộ nhớ trong', '128 GB', 5),
+(5, 'Camera sau', '48 MP + 12 MP', 6),
+(5, 'Pin, Sạc', '3349 mAh, 20 W', 7),
+(6, 'Màn hình', '6.6 inch, Super AMOLED 120Hz', 1),
+(6, 'Hệ điều hành', 'Android 14', 2),
+(6, 'Chipset', 'Exynos 1480', 3),
+(6, 'RAM', '8 GB', 4),
+(6, 'Bộ nhớ trong', '256 GB', 5),
+(6, 'Camera sau', '50 MP + 12 MP + 5 MP', 6),
+(6, 'Pin, Sạc', '5000 mAh, 25 W', 7),
+(7, 'Màn hình', '6.67 inch, AMOLED 1.5K', 1),
+(7, 'Hệ điều hành', 'Android 14 (HyperOS)', 2),
+(7, 'Chipset', 'Snapdragon 7s Gen 2', 3),
 (7, 'RAM', '12 GB', 4),
 (7, 'Bộ nhớ trong', '256 GB', 5),
-(7, 'Pin, Sạc', '11200 mAh, 45 W', 6),
-(8, 'Kết nối', 'Bluetooth 5.2, Jack 3.5mm', 1),
-(8, 'Thời lượng pin', '30 giờ', 2),
-(8, 'Cổng sạc', 'Type-C', 3),
-(8, 'Tính năng', 'Chống ồn ANC thông minh', 4),
+(7, 'Camera sau', '200 MP + 8 MP + 2 MP', 6),
+(7, 'Pin, Sạc', '5000 mAh, 120 W', 7),
+(8, 'Màn hình', '6.7 inch, AMOLED', 1),
+(8, 'Hệ điều hành', 'Android 14', 2),
+(8, 'Chipset', 'Snapdragon 8 Gen 2', 3),
+(8, 'RAM', '12 GB', 4),
+(8, 'Bộ nhớ trong', '512 GB', 5),
+(8, 'Camera sau', '50 MP + 8 MP + 32 MP', 6),
+(8, 'Pin, Sạc', '4600 mAh, 80 W', 7),
 (9, 'Màn hình', '6.1 inch, Super Retina XDR OLED', 1),
 (9, 'Hệ điều hành', 'iOS 16', 2),
 (9, 'Chipset', 'Apple A16 Bionic', 3),
@@ -374,10 +382,13 @@ INSERT INTO product_specs (product_id, spec_name, spec_value, sort_order) VALUES
 (9, 'Bộ nhớ trong', '128 GB', 5),
 (9, 'Camera sau', '48 MP + 12 MP + 12 MP', 6),
 (9, 'Pin, Sạc', '3200 mAh, 20 W', 7),
-(10, 'Màn hình', '1.69 inch, Retina LTPO OLED', 1),
-(10, 'Chất liệu', 'Viền nhôm, dây cao su', 2),
-(10, 'Kết nối', 'Bluetooth, Wi-Fi, GPS', 3),
-(10, 'Tính năng', 'Đo nhịp tim, oxy máu SpO2, ECG', 4)
+(10, 'Màn hình', '6.4 inch, Dynamic AMOLED 2X', 1),
+(10, 'Hệ điều hành', 'Android 14', 2),
+(10, 'Chipset', 'Snapdragon 8 Gen 2 for Galaxy', 3),
+(10, 'RAM', '8 GB', 4),
+(10, 'Bộ nhớ trong', '256 GB', 5),
+(10, 'Camera sau', '50 MP + 12 MP + 8 MP', 6),
+(10, 'Pin, Sạc', '4500 mAh, 25 W', 7)
 ON DUPLICATE KEY UPDATE spec_value = VALUES(spec_value), sort_order = VALUES(sort_order);
 
 INSERT INTO banners (id, slug, title, subtitle, image_url, link_url, is_active, sort_order) VALUES
