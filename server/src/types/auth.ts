@@ -12,6 +12,9 @@ export type LoginResponseData = {
     id: number;
     fullName: string;
     email: string;
+    phone?: string | null;
+    avatarUrl?: string | null;
+    dateOfBirth?: string | null;
     role: JwtRole;
     status: 'active' | 'blocked';
   };

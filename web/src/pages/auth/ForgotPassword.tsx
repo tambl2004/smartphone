@@ -3,6 +3,7 @@ import { Link, useRouter } from '@routes/router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Mail, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authForgotPassword, authVerifyForgot, authResetPassword } from '@services/auth.service';
 
 type Step = 'email' | 'sent' | 'reset';
 
@@ -10,20 +11,21 @@ export const ForgotPasswordPage: React.FC = () => {
     const { navigate } = useRouter();
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [step, setStep] = useState<Step>('email');
     const [focusedField, setFocusedField] = useState<string | null>(null);
+    const [verifiedOtp, setVerifiedOtp] = useState('');
 
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email) {
-            toast.error('Vui lòng nhập email');
-            return;
-        }
+        if (!email) { toast.error('Vui lòng nhập email'); return; }
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success('Mã xác minh đã được gửi!');
+        const result = await authForgotPassword(email);
         setIsLoading(false);
+        if (!result.ok) { toast.error(result.message ?? 'Lỗi gửi OTP'); return; }
+        toast.success('Mã xác minh đã được gửi!');
         setStep('sent');
     };
 
@@ -32,8 +34,6 @@ export const ForgotPasswordPage: React.FC = () => {
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
-
-        // Auto focus next field
         if (value && index < 5) {
             const nextInput = document.getElementById(`otp-${index + 1}`);
             nextInput?.focus();
@@ -50,24 +50,28 @@ export const ForgotPasswordPage: React.FC = () => {
     const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         const code = otp.join('');
-        if (code.length < 6) {
-            toast.error('Vui lòng nhập đủ mã xác minh');
-            return;
-        }
+        if (code.length < 6) { toast.error('Vui lòng nhập đủ mã xác minh'); return; }
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        const result = await authVerifyForgot(email, code);
         setIsLoading(false);
+        if (!result.ok) { toast.error(result.message ?? 'Mã OTP không đúng hoặc đã hết hạn'); return; }
+        setVerifiedOtp(code);
         setStep('reset');
     };
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!newPassword || !confirmPassword) { toast.error('Vui lòng nhập mật khẩu mới'); return; }
+        if (newPassword !== confirmPassword) { toast.error('Mật khẩu xác nhận không khớp'); return; }
+        if (newPassword.length < 8) { toast.error('Mật khẩu phải có ít nhất 8 ký tự'); return; }
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1200));
-        toast.success('Đặt lại mật khẩu thành công!');
+        const result = await authResetPassword(email, verifiedOtp, newPassword);
         setIsLoading(false);
+        if (!result.ok) { toast.error(result.message ?? 'Đặt lại mật khẩu thất bại'); return; }
+        toast.success('Đặt lại mật khẩu thành công!');
         navigate('/login');
     };
+
 
     return (
         <div className="min-h-screen flex">
@@ -335,6 +339,8 @@ export const ForgotPasswordPage: React.FC = () => {
                                         <input
                                             id="new-password"
                                             type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
                                             placeholder="Mật khẩu mới"
                                             className="w-full h-13 px-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                                             autoComplete="new-password"
@@ -344,6 +350,8 @@ export const ForgotPasswordPage: React.FC = () => {
                                         <input
                                             id="confirm-new-password"
                                             type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
                                             placeholder="Xác nhận mật khẩu mới"
                                             className="w-full h-13 px-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                                             autoComplete="new-password"

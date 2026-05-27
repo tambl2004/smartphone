@@ -7,11 +7,17 @@ import dashboardRoutes from './dashboard.routes.js';
 import orderRoutes from './order.routes.js';
 import productRoutes from './product.routes.js';
 import userRoutes from './user.routes.js';
+import locationRoutes from './location.routes.js';
+import addressRoutes from './address.routes.js';
+import profileRoutes from './profile.routes.js';
 import { authenticate, authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
+router.use('/locations', locationRoutes);
+router.use('/addresses', authenticate, addressRoutes);
+router.use('/profile', authenticate, profileRoutes);
 router.use('/users', authenticate, authorizeRoles('admin'), userRoutes);
 router.use('/customers', authenticate, authorizeRoles('admin'), customerRoutes);
 router.use('/orders', authenticate, authorizeRoles('admin'), orderRoutes);

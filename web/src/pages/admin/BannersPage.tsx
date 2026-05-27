@@ -45,6 +45,7 @@ export const ContentBannersPage: React.FC = () => {
   };
 
   const handleDelete = () => {
+    if (!deleteTarget) return;
     setBanners(prev => prev.filter(b => b.id !== deleteTarget.id));
     toast.success(`Đã xóa banner "${deleteTarget.title}"!`);
     setDeleteTarget(null);

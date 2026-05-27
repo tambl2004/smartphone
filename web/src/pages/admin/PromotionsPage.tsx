@@ -45,6 +45,7 @@ export const ContentPromotionsPage: React.FC = () => {
   };
 
   const handleDelete = () => {
+    if (!deleteTarget) return;
     setPromotions(prev => prev.filter(p => p.id !== deleteTarget.id));
     toast.success(`Đã xóa mã "${deleteTarget.code}"!`);
     setDeleteTarget(null);

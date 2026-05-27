@@ -3,7 +3,7 @@ import { Link, useRouter } from '@routes/router';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ADMIN_CREDENTIALS } from '@data/adminData';
+import { authLogin } from '@services/auth.service';
 
 export const LoginPage: React.FC = () => {
     const { navigate } = useRouter();
@@ -20,20 +20,23 @@ export const LoginPage: React.FC = () => {
             return;
         }
         setIsLoading(true);
-        // Simulate login
-        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Check admin credentials
-        if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-            toast.success('Chào mừng Admin! Đang chuyển đến bảng điều khiển...');
-            setIsLoading(false);
-            navigate('/admin');
+        const result = await authLogin(email, password);
+        setIsLoading(false);
+
+        if (!result.ok) {
+            toast.error(result.message ?? 'Email hoặc mật khẩu không đúng');
             return;
         }
 
-        toast.success('Đăng nhập thành công!');
-        setIsLoading(false);
-        navigate('/');
+        const user = result.data?.user;
+        toast.success(`Chào mừng ${user?.fullName ?? 'bạn'}!`);
+
+        if (user?.role === 'admin') {
+            navigate('/admin');
+        } else {
+            navigate('/');
+        }
     };
 
     return (

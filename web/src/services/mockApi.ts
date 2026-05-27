@@ -17,7 +17,7 @@ export const mockApi = {
     sort?: string;
   }): Promise<Product[]> => {
     await delay(400);
-    let list = [...productsData] as Product[];
+    let list = [...productsData] as unknown as Product[];
 
     if (filters) {
       if (filters.category && filters.category !== 'all') {
@@ -54,7 +54,7 @@ export const mockApi = {
   getProductById: async (id: string): Promise<Product | null> => {
     await delay(300);
     const item = productsData.find(p => p.id === id);
-    return item ? (item as Product) : null;
+    return item ? (item as unknown as Product) : null;
   },
 
   getCategories: async (): Promise<Category[]> => {

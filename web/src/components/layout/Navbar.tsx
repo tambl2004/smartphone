@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useRouter } from '@routes/router';
 import { useCart } from '@hooks/useCart';
 import { useWishlist } from '@hooks/useWishlist';
-import { Search, ShoppingBag, Heart, User, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, X, LogOut } from 'lucide-react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'motion/react';
 import { cn } from '@utils/cn';
+import { getAuth, clearAuth, type AuthState } from '@services/auth.service';
 
 export const Navbar: React.FC = () => {
   const { cartCount } = useCart();
@@ -13,8 +14,15 @@ export const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [auth, setAuth] = useState<AuthState | null>(getAuth);
 
   const { scrollY } = useScroll();
+
+  useEffect(() => {
+    const handleStorage = () => setAuth(getAuth());
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 20);
@@ -26,6 +34,12 @@ export const Navbar: React.FC = () => {
       navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
       setMenuOpen(false);
     }
+  };
+
+  const handleLogout = () => {
+    clearAuth();
+    setAuth(null);
+    navigate('/login');
   };
 
   return (
@@ -86,9 +100,7 @@ export const Navbar: React.FC = () => {
                 )}
               </div>
             </button>
-            <button className="hover:opacity-60 transition-opacity" onClick={() => { navigate('/login'); setMenuOpen(false); }} title="Đăng nhập">
-              <User size={20} />
-            </button>
+            {/* Cart Icon */}
             <button className="hover:opacity-60 transition-opacity" onClick={() => { navigate('/cart'); setMenuOpen(false); }} title="Giỏ hàng">
               <div className="relative">
                 <ShoppingBag size={20} />
@@ -102,6 +114,70 @@ export const Navbar: React.FC = () => {
             <button className="md:hidden hover:opacity-60 transition-opacity" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+
+            {auth ? (
+              <div className="relative group cursor-pointer">
+                <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <div className="w-8 h-8 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-sm font-bold overflow-hidden">
+                    {auth.user.avatarUrl ? (
+                      <img 
+                        src={`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '')}${auth.user.avatarUrl}`} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      auth.user.fullName.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold hidden sm:block max-w-[100px] truncate">
+                    {auth.user.fullName}
+                  </span>
+                </div>
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
+                  <div className="px-4 py-2 border-b border-neutral-100 dark:border-neutral-800 mb-2">
+                    <p className="text-sm font-bold text-black dark:text-white truncate">{auth.user.fullName}</p>
+                    <p className="text-xs text-neutral-500 truncate">{auth.user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
+                  >
+                    <User size={16} /> Quản lý hồ sơ
+                  </button>
+                  <button
+                    onClick={() => navigate('/addresses')}
+                    className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
+                  >
+                    <Heart size={16} /> Địa chỉ của tôi
+                  </button>
+                  {auth.user.role === 'admin' && (
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
+                    >
+                      <User size={16} /> Bảng điều khiển
+                    </button>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
+                  >
+                    <LogOut size={16} /> Đăng xuất
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="hover:opacity-60 transition-opacity text-sm font-semibold whitespace-nowrap"
+                onClick={() => { navigate('/login'); setMenuOpen(false); }}
+                title="Đăng nhập"
+              >
+                Đăng nhập
+              </button>
+            )}
+
+
           </div>
         </div>
 

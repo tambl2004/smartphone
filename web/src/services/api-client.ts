@@ -1,5 +1,7 @@
-import type { ApiResponse, PaginatedResponse } from '@types/api';
-import type { Brand, Category, Order, Product, User } from '@types/frontend-api';
+import type { ApiResponse, PaginatedResponse } from '../types/api';
+import type { Brand, Category, Product, User } from '../types';
+
+export type Order = any;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api';
 

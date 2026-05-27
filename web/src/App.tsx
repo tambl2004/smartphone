@@ -11,6 +11,8 @@ import { NewsPage } from '@pages/users/NewsPage';
 import { NewsDetailPage } from '@pages/users/NewsDetailPage';
 import { ContactPage } from '@pages/users/ContactPage';
 import { NotFoundPage } from '@pages/users/NotFoundPage';
+import { ProfilePage } from '@pages/users/ProfilePage';
+import { AddressPage } from '@pages/users/AddressPage';
 import { LoginPage } from '@pages/auth/Login';
 import { RegisterPage } from '@pages/auth/Register';
 import { ForgotPasswordPage } from '@pages/auth/ForgotPassword';
@@ -64,7 +66,7 @@ function AppContent() {
   }
 
   // Kiểm tra xem path hiện tại có hợp lệ không
-  const routes = ['/', '/products', '/cart', '/checkout', '/wishlist', '/news', '/contact'];
+  const routes = ['/', '/products', '/cart', '/checkout', '/wishlist', '/news', '/contact', '/profile', '/addresses'];
   const isDetailRoute = basePath.startsWith('/product/') && basePath.split('/').length === 3;
   const isNewsDetailRoute = basePath.startsWith('/news/') && basePath.split('/').length === 3;
   const isKnownRoute = routes.includes(basePath) || isDetailRoute || isNewsDetailRoute;
@@ -80,6 +82,8 @@ function AppContent() {
       <Route path="/news" element={<NewsPage />} />
       <Route path="/news/:slug" element={<NewsDetailPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/addresses" element={<AddressPage />} />
       {!isKnownRoute && <NotFoundPage />}
     </MainLayout>
   );

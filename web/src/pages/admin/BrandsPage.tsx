@@ -48,6 +48,7 @@ export const ContentBrandsPage: React.FC = () => {
   };
 
   const handleDelete = () => {
+    if (!deleteTarget) return;
     setBrands(prev => prev.filter(b => b.id !== deleteTarget.id));
     toast.success(`Đã xóa thương hiệu "${deleteTarget.name}"!`);
     setDeleteTarget(null);

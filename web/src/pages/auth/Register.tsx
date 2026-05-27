@@ -3,6 +3,7 @@ import { Link, useRouter } from '@routes/router';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User as UserIcon, Phone, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { authRegister, authVerifyRegister } from '@services/auth.service';
 
 const passwordRules = [
     { label: 'Tối thiểu 8 ký tự', test: (p: string) => p.length >= 8 },
@@ -12,6 +13,7 @@ const passwordRules = [
 
 export const RegisterPage: React.FC = () => {
     const { navigate } = useRouter();
+    const [step, setStep] = useState<'form' | 'otp'>('form');
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -19,6 +21,7 @@ export const RegisterPage: React.FC = () => {
         password: '',
         confirmPassword: '',
     });
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +32,23 @@ export const RegisterPage: React.FC = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length > 1) return;
+        const next = [...otp];
+        next[index] = value;
+        setOtp(next);
+        if (value && index < 5) {
+            document.getElementById(`reg-otp-${index + 1}`)?.focus();
+        }
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            document.getElementById(`reg-otp-${index - 1}`)?.focus();
+        }
+    };
+
+    // Step 1: gửi OTP
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.fullName || !formData.email || !formData.password) {
@@ -44,10 +64,35 @@ export const RegisterPage: React.FC = () => {
             return;
         }
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success('Đăng ký thành công! Vui lòng kiểm tra email.');
+        const result = await authRegister({
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone || undefined,
+            password: formData.password,
+        });
         setIsLoading(false);
-        navigate('/login');
+        if (!result.ok) {
+            toast.error(result.message ?? 'Đăng ký thất bại');
+            return;
+        }
+        toast.success('OTP đã gửi đến email của bạn!');
+        setStep('otp');
+    };
+
+    // Step 2: xác thực OTP
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const code = otp.join('');
+        if (code.length < 6) { toast.error('Vui lòng nhập đủ 6 số OTP'); return; }
+        setIsLoading(true);
+        const result = await authVerifyRegister(formData.email, code);
+        setIsLoading(false);
+        if (!result.ok) {
+            toast.error(result.message ?? 'Mã OTP không đúng hoặc đã hết hạn');
+            return;
+        }
+        toast.success('Đăng ký thành công! Chào mừng bạn đến với NEXPHONE.');
+        navigate('/');
     };
 
     const passwordStrength = passwordRules.filter(r => r.test(formData.password)).length;
@@ -164,10 +209,52 @@ export const RegisterPage: React.FC = () => {
 
                     <div className="mb-8 text-center">
                         <h2 className="text-4xl font-bold text-black dark:text-white tracking-tight">
-                            Đăng ký
+                            {step === 'form' ? 'Đăng ký' : 'Xác thực email'}
                         </h2>
+                        {step === 'otp' && (
+                            <p className="text-neutral-500 text-sm mt-2">
+                                Nhập mã 6 số đã gửi đến <strong className="text-black dark:text-white">{formData.email}</strong>
+                            </p>
+                        )}
                     </div>
 
+                    {step === 'otp' ? (
+                        <form onSubmit={handleVerifyOtp} className="space-y-6">
+                            <div className="flex gap-2.5 justify-between">
+                                {otp.map((digit, i) => (
+                                    <input
+                                        key={i}
+                                        id={`reg-otp-${i}`}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChange={(e) => handleOtpChange(i, e.target.value.replace(/\D/g, ''))}
+                                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                        className="w-full aspect-square max-w-[56px] text-center text-xl font-bold bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-black dark:text-white outline-none focus:border-black dark:focus:border-white transition-all duration-200"
+                                    />
+                                ))}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="relative w-full h-13 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group overflow-hidden"
+                            >
+                                <span className={`inline-flex items-center gap-2 transition-all duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                    Xác nhận
+                                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
+                                </span>
+                                {isLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-5 h-5 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin" />
+                                    </div>
+                                )}
+                            </button>
+                            <button type="button" onClick={() => setStep('form')} className="w-full text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
+                                ← Quay lại chỉnh sửa thông tin
+                            </button>
+                        </form>
+                    ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Full Name */}
                         <div className="relative">
@@ -343,6 +430,7 @@ export const RegisterPage: React.FC = () => {
                             )}
                         </button>
                     </form>
+                    )}
 
                     <p className="mt-8 text-center text-sm text-neutral-500">
                         Đã có tài khoản?{' '}

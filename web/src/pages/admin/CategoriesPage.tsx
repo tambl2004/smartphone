@@ -55,6 +55,7 @@ export const ContentCategoriesPage: React.FC = () => {
   };
 
   const handleDelete = () => {
+    if (!deleteTarget) return;
     setCategories(prev => prev.filter(c => c.id !== deleteTarget.id));
     toast.success(`Đã xóa danh mục "${deleteTarget.name}"!`);
     setDeleteTarget(null);

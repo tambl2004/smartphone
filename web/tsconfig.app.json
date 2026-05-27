@@ -10,59 +10,57 @@
       "vite/client"
     ],
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@components": [
-        "src/components"
+        "./src/components"
       ],
       "@components/*": [
-        "src/components/*"
+        "./src/components/*"
       ],
       "@data": [
-        "src/data"
+        "./src/data"
       ],
       "@data/*": [
-        "src/data/*"
+        "./src/data/*"
       ],
       "@types": [
-        "src/types"
+        "./src/types"
       ],
       "@types/*": [
-        "src/types/*"
+        "./src/types/*"
       ],
       "@utils": [
-        "src/utils"
+        "./src/utils"
       ],
       "@utils/*": [
-        "src/utils/*"
+        "./src/utils/*"
       ],
       "@pages": [
-        "src/pages"
+        "./src/pages"
       ],
       "@pages/*": [
-        "src/pages/*"
+        "./src/pages/*"
       ],
       "@hooks": [
-        "src/hooks"
+        "./src/hooks"
       ],
       "@hooks/*": [
-        "src/hooks/*"
+        "./src/hooks/*"
       ],
       "@routes": [
-        "src/routes"
+        "./src/routes"
       ],
       "@routes/*": [
-        "src/routes/*"
+        "./src/routes/*"
       ],
       "@services": [
-        "src/services"
+        "./src/services"
       ],
       "@services/*": [
-        "src/services/*"
+        "./src/services/*"
       ]
     },
     /* Bundler mode */

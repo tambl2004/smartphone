@@ -11,10 +11,33 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(20) NULL,
     avatar_url VARCHAR(500) NULL,
     status ENUM('active', 'blocked') NOT NULL DEFAULT 'active',
+    otp_code VARCHAR(6) NULL,
+    otp_expires_at DATETIME NULL,
+    is_verified TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uk_users_email (email)
+) ENGINE=InnoDB;
+
+-- User Addresses
+CREATE TABLE IF NOT EXISTS user_addresses (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    province_id VARCHAR(10) NOT NULL,
+    province_name VARCHAR(255) NOT NULL,
+    district_id VARCHAR(10) NOT NULL,
+    district_name VARCHAR(255) NOT NULL,
+    ward_id VARCHAR(10) NOT NULL,
+    ward_name VARCHAR(255) NOT NULL,
+    street_address VARCHAR(500) NOT NULL,
+    is_default TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_user_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Product taxonomy
@@ -435,7 +458,9 @@ INSERT INTO stores (name, address, opening_hours, phone) VALUES
 ('NEXPHONE Hà Nội — Cầu Giấy', '145 Cầu Giấy, phường Dịch Vọng Hậu, Cầu Giấy, Hà Nội', 'T2–CN: 8:00 – 21:30', NULL)
 ON DUPLICATE KEY UPDATE address = VALUES(address), opening_hours = VALUES(opening_hours), phone = VALUES(phone);
 
--- Seed admin user for initial login
-INSERT INTO users (full_name, email, password_hash, role, status)
-VALUES ('Admin', 'admin@gmail.com', '123456', 'admin', 'active')
-ON DUPLICATE KEY UPDATE email = email;
+-- Seed admin user (password: '123456', bcrypt hash)
+INSERT INTO users (full_name, email, password_hash, role, status, is_verified)
+VALUES ('Admin', 'admin@gmail.com', '$2b$10$260qOeDzj9ns14xjpW5oMuMESDNdsRdPSA4a89AC8E.fCtxtBn3pa', 'admin', 'active', 1)
+ON DUPLICATE KEY UPDATE
+  password_hash = VALUES(password_hash),
+  is_verified = 1;
