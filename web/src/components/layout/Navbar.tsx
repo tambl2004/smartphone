@@ -146,6 +146,12 @@ export const Navbar: React.FC = () => {
                     <User size={16} /> Quản lý hồ sơ
                   </button>
                   <button
+                    onClick={() => navigate('/orders')}
+                    className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
+                  >
+                    <ShoppingBag size={16} /> Đơn hàng của tôi
+                  </button>
+                  <button
                     onClick={() => navigate('/addresses')}
                     className="w-full text-left px-4 py-2 text-sm text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors flex items-center gap-2"
                   >

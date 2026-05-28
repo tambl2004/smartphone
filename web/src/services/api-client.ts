@@ -83,3 +83,5 @@ export const apiClient = {
   toggleWishlistItem: (productId: number, token: string) => request<{ added: boolean }>(`/customers/me/wishlist/${productId}`, { method: 'POST', token }),
   deleteWishlistItem: (productId: number, token: string) => request<null>(`/customers/me/wishlist/${productId}`, { method: 'DELETE', token }),
 };
+
+export { request as apiRequest };

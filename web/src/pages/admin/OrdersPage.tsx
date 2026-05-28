@@ -1,93 +1,195 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Eye, X, MapPin, Phone, Mail, CreditCard } from 'lucide-react';
+import { Search, Eye, X, MapPin, Phone, Mail, CreditCard, Package, Trash2, Printer, ChevronDown } from 'lucide-react';
 import { ChartCard } from '@components/admin/ChartCard';
-import { StatusBadge } from '@components/admin/StatusBadge';
-import { orders, formatCurrency } from '@data/adminData';
-import type { Order } from '@data/adminData';
+import { formatPrice, formatDate } from '@utils/format';
+import { orderService, OrderRecord } from '@services/order.service';
+import { getAuth } from '@services/auth.service';
 
 export const OrdersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const statusFilters: { key: string; label: string; count: number }[] = [
-    { key: 'all', label: 'Tất cả', count: orders.length },
-    { key: 'pending', label: 'Chờ xử lý', count: orders.filter(o => o.status === 'pending').length },
-    { key: 'confirmed', label: 'Đã xác nhận', count: orders.filter(o => o.status === 'confirmed').length },
-    { key: 'shipping', label: 'Đang giao', count: orders.filter(o => o.status === 'shipping').length },
-    { key: 'delivered', label: 'Đã giao', count: orders.filter(o => o.status === 'delivered').length },
-    { key: 'cancelled', label: 'Đã hủy', count: orders.filter(o => o.status === 'cancelled').length },
+  useEffect(() => {
+    let active = true;
+    const delayDebounceFn = setTimeout(() => {
+      const fetchOrders = async () => {
+        const auth = getAuth();
+        if (!auth?.token) {
+          if (active) setLoading(false);
+          return;
+        }
+        try {
+          const { items } = await orderService.getAllOrders(auth.token, searchQuery, filterStatus);
+          if (active) {
+            setOrders(items);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error(error);
+          if (active) setLoading(false);
+        }
+      };
+      void fetchOrders();
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(delayDebounceFn);
+    };
+  }, [searchQuery, filterStatus]);
+
+  const handleStatusChange = async (orderId: number, newStatus: string) => {
+    const auth = getAuth();
+    if (!auth?.token) return;
+    try {
+      await orderService.updateOrderStatus(orderId, newStatus, auth.token);
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
+      }
+    } catch (error) {
+      console.error('Failed to update status', error);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: number) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')) return;
+    const auth = getAuth();
+    if (!auth?.token) return;
+    try {
+      await orderService.deleteOrder(orderId, auth.token);
+      setOrders(orders.filter(o => o.id !== orderId));
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete order', error);
+    }
+  };
+
+  const statusFilters = [
+    { key: 'all', label: 'Tất cả' },
+    { key: 'pending', label: 'Chờ xử lý' },
+    { key: 'confirmed', label: 'Đã xác nhận' },
+    { key: 'shipping', label: 'Đang giao' },
+    { key: 'delivered', label: 'Đã giao' },
+    { key: 'cancelled', label: 'Đã hủy' },
   ];
-
-  const filteredOrders = orders.filter(o => {
-    const matchSearch = o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.customer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = filterStatus === 'all' || o.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Quản lý đơn hàng</h1>
-        <p className="text-sm text-white/40 mt-1">{orders.length} đơn hàng</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Quản lý đơn hàng</h1>
+          <p className="text-sm text-neutral-500 mt-1">{orders.length} đơn hàng {loading && '(Đang tải...)'}</p>
+        </div>
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
         {statusFilters.map(sf => (
-          <button key={sf.key} onClick={() => setFilterStatus(sf.key)}
-            className={`h-9 px-4 rounded-lg text-sm font-medium transition-all border-none outline-none whitespace-nowrap flex items-center gap-2 ${filterStatus === sf.key ? 'bg-indigo-600 text-white' : 'bg-white/[0.04] text-white/50 hover:text-white hover:bg-white/[0.08]'}`}>
+          <button key={sf.key} onClick={() => { setLoading(true); setFilterStatus(sf.key); }}
+            className={`h-9 px-4 rounded-lg text-sm font-medium transition-all border-none outline-none whitespace-nowrap flex items-center gap-2 ${filterStatus === sf.key ? 'bg-indigo-600 text-white' : 'bg-neutral-100 dark:bg-white/[0.04] text-neutral-600 dark:text-white/50 hover:bg-neutral-200 dark:hover:bg-white/[0.08]'}`}>
             {sf.label}
-            <span className={`text-xs px-1.5 py-0.5 rounded-full ${filterStatus === sf.key ? 'bg-white/20' : 'bg-white/[0.06]'}`}>{sf.count}</span>
           </button>
         ))}
       </div>
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-        <input type="text" placeholder="Tìm mã đơn, tên khách hàng..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full h-10 pl-10 pr-4 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white placeholder:text-white/30 outline-none focus:border-indigo-500/50 transition-all" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <input type="text" placeholder="Tìm mã đơn, tên khách hàng..." value={searchQuery} onChange={(e) => { setLoading(true); setSearchQuery(e.target.value); }}
+          className="w-full h-10 pl-10 pr-4 bg-white dark:bg-white/[0.04] border border-neutral-200 dark:border-white/[0.08] rounded-lg text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-indigo-500/50 transition-all shadow-sm dark:shadow-none" />
       </div>
 
       {/* Orders Table */}
-      <ChartCard title={`Hiển thị ${filteredOrders.length} đơn hàng`}>
+      <ChartCard title={`Danh sách đơn hàng`}>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Mã đơn</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Khách hàng</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Sản phẩm</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Tổng tiền</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Thanh toán</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Trạng thái</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3 pr-4">Ngày tạo</th>
-                <th className="text-left text-xs font-medium text-white/30 pb-3"></th>
+              <tr className="border-b border-neutral-100 dark:border-white/[0.06]">
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Mã đơn</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Khách hàng</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Sản phẩm</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Tổng tiền</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Thanh toán</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Trạng thái</th>
+                <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Ngày tạo</th>
+                <th className="text-right text-xs font-medium text-neutral-400 pb-3">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order, index) => (
-                <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.03 }}
-                  className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer group" onClick={() => setSelectedOrder(order)}>
-                  <td className="py-3 pr-4"><span className="text-sm font-mono text-indigo-400">{order.id}</span></td>
-                  <td className="py-3 pr-4"><span className="text-sm text-white/70">{order.customer}</span></td>
-                  <td className="py-3 pr-4">
-                    <div className="flex -space-x-2">
-                      {order.items.slice(0, 3).map((item, i) => (
-                        <img key={i} src={item.image} alt="" className="w-7 h-7 rounded-md object-cover border-2 border-[#141414]" />
-                      ))}
-                      {order.items.length > 3 && <span className="w-7 h-7 rounded-md bg-white/[0.08] flex items-center justify-center text-[10px] text-white/50 border-2 border-[#141414]">+{order.items.length - 3}</span>}
+              {orders.map((order, index) => (
+                <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.02 }}
+                  className="border-b border-neutral-50 dark:border-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors group">
+                  <td className="py-3 pr-4"><span className="text-sm font-mono text-indigo-600 dark:text-indigo-400 cursor-pointer" onClick={() => setSelectedOrder(order)}>{order.orderCode}</span></td>
+                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-black dark:text-white/80">{order.customerName}</span>
+                      <span className="text-xs text-neutral-500">{order.customerEmail}</span>
                     </div>
                   </td>
-                  <td className="py-3 pr-4"><span className="text-sm text-white/70 font-medium">{formatCurrency(order.total)}</span></td>
-                  <td className="py-3 pr-4"><span className="text-xs text-white/40">{order.paymentMethod}</span></td>
-                  <td className="py-3 pr-4"><StatusBadge status={order.status} /></td>
-                  <td className="py-3 pr-4"><span className="text-sm text-white/40">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span></td>
-                  <td className="py-3"><button className="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.08] transition-all border-none outline-none opacity-0 group-hover:opacity-100"><Eye size={14} /></button></td>
+                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                    <div className="flex -space-x-2">
+                      {order.items?.slice(0, 3).map((item, i) => (
+                        <div key={i} className="w-7 h-7 rounded-md bg-white border-2 border-neutral-50 dark:border-[#141414] overflow-hidden flex items-center justify-center">
+                          {item.productImage ? (
+                            <img src={item.productImage.startsWith('http') ? item.productImage : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '') + (item.productImage.startsWith('/') ? '' : '/') + item.productImage} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Package size={12} className="text-neutral-300" />
+                          )}
+                        </div>
+                      ))}
+                      {(order.items?.length || 0) > 3 && <span className="w-7 h-7 rounded-md bg-neutral-100 dark:bg-white/[0.08] flex items-center justify-center text-[10px] text-neutral-500 border-2 border-neutral-50 dark:border-[#141414]">+{(order.items?.length || 0) - 3}</span>}
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}><span className="text-sm text-black dark:text-white/80 font-medium">{formatPrice(order.totalAmount)}</span></td>
+                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-neutral-500 uppercase">{order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : order.paymentMethod}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div className="relative inline-block">
+                      <select 
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full border outline-none cursor-pointer pr-6 ${
+                          order.status === 'pending' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
+                          order.status === 'confirmed' ? 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
+                          order.status === 'shipping' ? 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
+                          order.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
+                          'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+                        }`}
+                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
+                      >
+                        <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
+                        <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
+                        <option value="shipping" className="text-purple-600 bg-white dark:bg-neutral-900">Đang giao</option>
+                        <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
+                        <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
+                      </select>
+                      <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                    </div>
+                  </td>
+                  <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}><span className="text-sm text-neutral-500">{formatDate(order.createdAt)}</span></td>
+                  <td className="py-3 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => setSelectedOrder(order)} className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.08] transition-all border-none outline-none"><Eye size={14} /></button>
+                      <button onClick={() => handleDeleteOrder(order.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all border-none outline-none"><Trash2 size={14} /></button>
+                    </div>
+                  </td>
                 </motion.tr>
               ))}
+              {orders.length === 0 && !loading && (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-sm text-neutral-400">Không tìm thấy đơn hàng nào.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -96,46 +198,151 @@ export const OrdersPage: React.FC = () => {
       {/* Order Detail Modal */}
       <AnimatePresence>
         {selectedOrder && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#1A1A1A] border border-white/[0.08] rounded-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedOrder(null)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">{selectedOrder.id}</h3>
-                  <p className="text-xs text-white/40 mt-0.5">{new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}</p>
+                  <h3 className="text-xl font-black text-black dark:text-white mb-1">Chi tiết đơn hàng</h3>
+                  <p className="text-sm text-neutral-500">Mã đơn: <strong className="text-black dark:text-white font-mono">{selectedOrder.orderCode}</strong></p>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-all border-none outline-none"><X size={16} /></button>
+                <button 
+                  onClick={() => setSelectedOrder(null)}
+                  className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="p-5 space-y-5">
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={selectedOrder.status} />
-                  <span className="text-sm text-white/40">•</span>
-                  <span className="text-sm text-white/50 flex items-center gap-1"><CreditCard size={13} />{selectedOrder.paymentMethod}</span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Khách hàng</p>
-                  <p className="text-sm text-white/80">{selectedOrder.customer}</p>
-                  <p className="text-xs text-white/40 flex items-center gap-1"><Mail size={12} />{selectedOrder.email}</p>
-                  <p className="text-xs text-white/40 flex items-center gap-1"><Phone size={12} />{selectedOrder.phone}</p>
-                  <p className="text-xs text-white/40 flex items-center gap-1"><MapPin size={12} />{selectedOrder.address}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-white/30 uppercase tracking-wider">Sản phẩm</p>
-                  {selectedOrder.items.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                      <img src={item.image} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                      <div className="flex-1"><p className="text-sm text-white/80">{item.name}</p><p className="text-xs text-white/40">x{item.quantity}</p></div>
-                      <p className="text-sm text-white/70 font-medium">{formatCurrency(item.price * item.quantity)}</p>
+              
+              <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+                <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
+                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                    <div className="flex items-center justify-between mb-8 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl">
+                      <div>
+                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Trạng thái</p>
+                        <div className="relative inline-block">
+                          <select 
+                            value={selectedOrder.status}
+                            onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
+                            className={`text-sm font-bold px-3 py-1.5 rounded-xl border outline-none cursor-pointer pr-8 ${
+                              selectedOrder.status === 'pending' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
+                              selectedOrder.status === 'confirmed' ? 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
+                              selectedOrder.status === 'shipping' ? 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
+                              selectedOrder.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
+                              'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
+                            }`}
+                            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
+                          >
+                            <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
+                            <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
+                            <option value="shipping" className="text-purple-600 bg-white dark:bg-neutral-900">Đang giao</option>
+                            <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
+                            <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
+                          </select>
+                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Ngày đặt</p>
+                        <p className="text-sm font-bold text-black dark:text-white">{formatDate(selectedOrder.createdAt)}</p>
+                      </div>
                     </div>
-                  ))}
+
+                    <div className="mb-8">
+                      <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2"><CreditCard size={16} className="text-neutral-400" /> Thông tin giao hàng</h4>
+                      <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Mail size={12} /> Người nhận</span>
+                          <span className="font-semibold text-black dark:text-white">{selectedOrder.customerName}</span>
+                          <span className="text-neutral-500">{selectedOrder.customerEmail}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><Phone size={12} /> Điện thoại</span>
+                          <span className="font-semibold text-black dark:text-white">{selectedOrder.customerPhone}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><MapPin size={12} /> Địa chỉ</span>
+                          <span className="font-semibold text-black dark:text-white leading-relaxed">{selectedOrder.shippingAddress}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"><CreditCard size={12} /> Thanh toán</span>
+                          <span className="font-semibold text-black dark:text-white uppercase">{selectedOrder.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : selectedOrder.paymentMethod}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                  <span className="text-sm text-white/50">Tổng cộng</span>
-                  <span className="text-lg font-bold text-white">{formatCurrency(selectedOrder.total)}</span>
+                
+                <div className="w-full lg:w-1/2 flex flex-col bg-neutral-50/50 dark:bg-neutral-800/20">
+                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                    <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2"><Package size={16} className="text-neutral-400" /> Sản phẩm ({selectedOrder.items?.length || 0})</h4>
+                    <div className="space-y-4">
+                      {selectedOrder.items?.map((item, i) => (
+                        <div key={i} className="flex items-center gap-4 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 last:pb-0">
+                          <div className="w-16 h-16 rounded-xl bg-white dark:bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-100 dark:border-neutral-700 flex items-center justify-center">
+                            {item.productImage ? (
+                              <img 
+                                src={item.productImage.startsWith('http') ? item.productImage : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '') + (item.productImage.startsWith('/') ? '' : '/') + item.productImage} 
+                                alt={item.productName} 
+                                className="w-full h-full object-cover" 
+                              />
+                            ) : (
+                              <Package className="w-8 h-8 text-neutral-300 m-4" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-black dark:text-white truncate">{item.productName}</p>
+                            <p className="text-xs text-neutral-500 mt-1">Số lượng: {item.quantity}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-black text-black dark:text-white">{formatPrice(item.lineTotal)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-6 border-t border-neutral-100 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 flex flex-col gap-3 backdrop-blur-sm">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-500">Tạm tính:</span>
+                      <span className="font-semibold text-black dark:text-white">{formatPrice(selectedOrder.subtotalAmount || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-neutral-500 flex items-center gap-2">
+                        Giảm giá {selectedOrder.promotionCode ? <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md">{selectedOrder.promotionCode}</span> : ''}:
+                      </span>
+                      <span className="font-semibold text-emerald-600">-{formatPrice(selectedOrder.discountAmount || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+                      <span className="font-bold text-black dark:text-white">Tổng thanh toán:</span>
+                      <span className="text-2xl font-black text-black dark:text-white tracking-tight">{formatPrice(selectedOrder.totalAmount)}</span>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center border-t border-neutral-100 dark:border-neutral-800">
+                <button 
+                  onClick={() => handleDeleteOrder(selectedOrder.id)}
+                  className="inline-flex h-12 items-center justify-center bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
+                >
+                  <Trash2 size={16} /> Xóa đơn hàng
+                </button>
+                <button 
+                  onClick={() => window.print()}
+                  className="inline-flex h-12 items-center justify-center bg-indigo-600 hover:bg-indigo-700 px-6 font-bold rounded-xl transition-colors text-sm gap-2 border-none shadow-sm"
+                  style={{ color: '#ffffff', backgroundColor: '#4f46e5' }}
+                >
+                  <Printer size={16} color="#ffffff" /> <span style={{ color: '#ffffff' }}>In hóa đơn</span>
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

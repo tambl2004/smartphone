@@ -170,18 +170,20 @@ export const ContentBannersPage: React.FC = () => {
                   <div>
                     <label className="block text-xs font-medium opacity-40 mb-1.5">Vị trí</label>
                     <select value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})}
-                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all">
-                      <option value="Hero Banner">Hero Banner</option>
-                      <option value="Sub Banner">Sub Banner</option>
-                      <option value="Popup">Popup</option>
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      <option value="Hero Banner" className="bg-white dark:bg-[#1A1A1A]">Hero Banner</option>
+                      <option value="Sub Banner" className="bg-white dark:bg-[#1A1A1A]">Sub Banner</option>
+                      <option value="Popup" className="bg-white dark:bg-[#1A1A1A]">Popup</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium opacity-40 mb-1.5">Trạng thái</label>
                     <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all">
-                      <option value="active">Hiển thị</option>
-                      <option value="draft">Nháp</option>
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      <option value="active" className="bg-white dark:bg-[#1A1A1A]">Hiển thị</option>
+                      <option value="draft" className="bg-white dark:bg-[#1A1A1A]">Nháp</option>
                     </select>
                   </div>
                 </div>

@@ -106,10 +106,11 @@ export const FaqsPage: React.FC = () => {
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 bg-black text-white font-bold text-sm rounded-xl hover:bg-neutral-800 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-colors"
+          style={{ color: '#ffffff', backgroundColor: '#4f46e5' }}
         >
-          <Plus size={16} />
-          Thêm FAQ mới
+          <Plus size={16} color="#ffffff" />
+          <span style={{ color: '#ffffff' }}>Thêm FAQ mới</span>
         </button>
       </div>
 
@@ -259,9 +260,10 @@ export const FaqsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 font-bold text-sm text-white bg-black hover:bg-neutral-800 rounded-xl transition-colors shadow-sm"
+                  className="flex-1 px-4 py-2.5 font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
+                  style={{ color: '#ffffff', backgroundColor: '#4f46e5' }}
                 >
-                  {editingFaq ? 'Lưu thay đổi' : 'Thêm mới'}
+                  <span style={{ color: '#ffffff' }}>{editingFaq ? 'Lưu thay đổi' : 'Thêm mới'}</span>
                 </button>
               </div>
             </form>

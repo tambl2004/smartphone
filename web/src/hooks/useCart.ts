@@ -21,7 +21,8 @@ const normalizeCartItem = (item: CartItem): CartItem | null => {
 interface CartState {
   items: CartItem[];
   loading: boolean;
-  syncFromServer: () => Promise<void>;
+  hasFetched: boolean;
+  syncFromServer: (force?: boolean) => Promise<void>;
   addToCart: (product: Product, quantity?: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
@@ -31,7 +32,9 @@ interface CartState {
 export const useCartStore = create<CartState>()((set, get) => ({
   items: [],
   loading: false,
-  syncFromServer: async () => {
+  hasFetched: false,
+  syncFromServer: async (force = false) => {
+    if (!force && (get().loading || get().hasFetched)) return;
     const auth = getAuth();
     if (!auth?.token) return;
     set({ loading: true });
@@ -39,7 +42,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       const result = await apiClient.getCart(auth.token);
       if (result.success && result.data) {
         const items = result.data.items.map(normalizeCartItem).filter((item): item is CartItem => item !== null);
-        set({ items });
+        set({ items, hasFetched: true });
       }
     } finally {
       set({ loading: false });
@@ -61,7 +64,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
 
     await apiClient.upsertCartItem(product.id, newQuantity, auth.token);
     toast.success(`Đã thêm ${product.name} vào giỏ hàng`);
-    await get().syncFromServer();
+    await get().syncFromServer(true);
   },
   removeFromCart: async (productId) => {
     const auth = getAuth();
@@ -70,7 +73,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
       return;
     }
     await apiClient.deleteCartItem(productId, auth.token);
-    await get().syncFromServer();
+    await get().syncFromServer(true);
   },
   updateQuantity: async (productId, quantity) => {
     const auth = getAuth();
@@ -89,7 +92,7 @@ export const useCartStore = create<CartState>()((set, get) => ({
     } else {
       await apiClient.upsertCartItem(productId, quantity, auth.token);
     }
-    await get().syncFromServer();
+    await get().syncFromServer(true);
   },
   clearCart: async () => {
     const auth = getAuth();
@@ -98,16 +101,17 @@ export const useCartStore = create<CartState>()((set, get) => ({
       return;
     }
     await apiClient.clearCart(auth.token);
-    set({ items: [] });
+    set({ items: [], hasFetched: true });
   }
 }));
 
 export function useCart() {
   const store = useCartStore();
+  const syncFromServer = store.syncFromServer;
 
   useEffect(() => {
-    void store.syncFromServer();
-  }, [store.syncFromServer]);
+    void syncFromServer();
+  }, [syncFromServer]);
 
   const validItems = store.items.map(normalizeCartItem).filter((item): item is CartItem => item !== null);
   const cartCount = validItems.reduce((sum, item) => sum + item.quantity, 0);

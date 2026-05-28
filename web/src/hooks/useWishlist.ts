@@ -16,14 +16,17 @@ const requireLogin = (message: string) => {
 interface WishlistState {
   items: Product[];
   loading: boolean;
-  syncFromServer: () => Promise<void>;
+  hasFetched: boolean;
+  syncFromServer: (force?: boolean) => Promise<void>;
   toggleWishlist: (product: Product) => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistState>()((set, get) => ({
   items: [],
   loading: false,
-  syncFromServer: async () => {
+  hasFetched: false,
+  syncFromServer: async (force = false) => {
+    if (!force && (get().loading || get().hasFetched)) return;
     const auth = getAuth();
     if (!auth?.token) return;
     set({ loading: true });
@@ -31,7 +34,7 @@ export const useWishlistStore = create<WishlistState>()((set, get) => ({
       const result = await apiClient.getWishlist(auth.token);
       if (result.success && result.data) {
         const items = result.data.items.filter((item): item is Product => Boolean(item && typeof item.id === 'number' && typeof item.name === 'string'));
-        set({ items });
+        set({ items, hasFetched: true });
       }
     } finally {
       set({ loading: false });
@@ -45,16 +48,17 @@ export const useWishlistStore = create<WishlistState>()((set, get) => ({
     }
     const result = await apiClient.toggleWishlistItem(product.id, auth.token);
     toast.success(result.data?.added ? `Đã thêm ${product.name} vào yêu thích` : `Đã xoá ${product.name} khỏi yêu thích`);
-    await get().syncFromServer();
+    await get().syncFromServer(true);
   }
 }));
 
 export function useWishlist() {
   const store = useWishlistStore();
+  const syncFromServer = store.syncFromServer;
 
   useEffect(() => {
-    void store.syncFromServer();
-  }, [store.syncFromServer]);
+    void syncFromServer();
+  }, [syncFromServer]);
 
   const isInWishlist = (productId: number) => store.items.some(item => item.id === productId);
   return { ...store, isInWishlist };

@@ -255,6 +255,47 @@ CREATE TABLE IF NOT EXISTS faqs (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS promotions (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(50) NOT NULL,
+    discount_type ENUM('percent', 'fixed') NOT NULL DEFAULT 'fixed',
+    discount_value DECIMAL(15,0) NOT NULL,
+    min_order_value DECIMAL(15,0) NOT NULL DEFAULT 0,
+    max_discount_amount DECIMAL(15,0) DEFAULT NULL,
+    start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usage_limit INT DEFAULT NULL,
+    used_count INT NOT NULL DEFAULT 0,
+    per_user_limit INT NOT NULL DEFAULT 1,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_promotions_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS promotion_usages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    promotion_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED DEFAULT NULL,
+    used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_promo_usages_promo (promotion_id),
+    KEY idx_promo_usages_user (user_id),
+    CONSTRAINT fk_promo_usages_promo FOREIGN KEY (promotion_id) REFERENCES promotions (id) ON DELETE CASCADE,
+    CONSTRAINT fk_promo_usages_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_promo_usages_order FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO promotions (code, discount_type, discount_value, min_order_value, max_discount_amount, start_date, end_date, usage_limit, per_user_limit, is_active) 
+VALUES 
+('WELCOME10', 'percent', 10, 0, 500000, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 1000, 1, 1), 
+('GIAM100K', 'fixed', 100000, 500000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY), 500, 2, 1), 
+('FREESHIP', 'fixed', 30000, 200000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), 200, 3, 1), 
+('FLASH50', 'percent', 50, 0, 1000000, DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY), 50, 1, 0)
+ON DUPLICATE KEY UPDATE code=code;
+
 
 
 CREATE TABLE IF NOT EXISTS stores (

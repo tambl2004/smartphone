@@ -51,10 +51,11 @@ export const DashboardPage: React.FC = () => {
           <p className="text-sm text-white/40 mt-1">Tổng quan hoạt động kinh doanh</p>
         </div>
         <div className="flex items-center gap-2">
-          <select className="h-9 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white/70 outline-none focus:border-indigo-500/50 appearance-none cursor-pointer">
-            <option value="month">Tháng này</option>
-            <option value="week">Tuần này</option>
-            <option value="year">Năm nay</option>
+          <select className="h-9 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white/70 outline-none focus:border-indigo-500/50 appearance-none cursor-pointer"
+            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+            <option value="month" className="bg-white dark:bg-[#1A1A1A]">Tháng này</option>
+            <option value="week" className="bg-white dark:bg-[#1A1A1A]">Tuần này</option>
+            <option value="year" className="bg-white dark:bg-[#1A1A1A]">Năm nay</option>
           </select>
         </div>
       </div>
@@ -118,7 +119,7 @@ export const DashboardPage: React.FC = () => {
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#ffffff15', borderRadius: '12px', fontSize: '12px' }}
                       itemStyle={{ color: '#fff' }}
-                      formatter={(value: any) => [formatCurrency(Number(value)), 'Doanh thu']}
+                      formatter={(value: number | string) => [formatCurrency(Number(value)), 'Doanh thu']}
                       labelStyle={{ color: '#ffffff50', marginBottom: '4px' }}
                     />
                     <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorDashboardRevenue)" />

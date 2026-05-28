@@ -164,11 +164,12 @@ export const ContentCategoriesPage: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium opacity-40 mb-1.5">Biểu tượng</label>
                   <select value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})}
-                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all">
-                    <option value="Smartphone">Điện thoại (Smartphone)</option>
-                    <option value="Laptop">Máy tính (Laptop)</option>
-                    <option value="Headphones">Phụ kiện (Headphones)</option>
-                    <option value="Watch">Đồng hồ (Watch)</option>
+                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                    style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                    <option value="Smartphone" className="bg-white dark:bg-[#1A1A1A]">Điện thoại (Smartphone)</option>
+                    <option value="Laptop" className="bg-white dark:bg-[#1A1A1A]">Máy tính (Laptop)</option>
+                    <option value="Headphones" className="bg-white dark:bg-[#1A1A1A]">Phụ kiện (Headphones)</option>
+                    <option value="Watch" className="bg-white dark:bg-[#1A1A1A]">Đồng hồ (Watch)</option>
                   </select>
                 </div>
               </div>

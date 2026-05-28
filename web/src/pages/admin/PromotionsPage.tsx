@@ -1,58 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Save, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
-
-const initialPromotions = [
-  { id: 1, code: 'NEWYEAR2025', discount: '15%', usage: 45, maxUsage: 100, expiry: '2025-01-15', status: 'active' },
-  { id: 2, code: 'WELCOME10', discount: '10%', usage: 128, maxUsage: 500, expiry: '2025-12-31', status: 'active' },
-  { id: 3, code: 'FLASH50', discount: '50%', usage: 20, maxUsage: 20, expiry: '2024-12-16', status: 'expired' },
-];
+import { promotionService, Promotion } from '@services/promotion.service';
+import { getAuth } from '@services/auth.service';
 
 export const ContentPromotionsPage: React.FC = () => {
-  const [promotions, setPromotions] = useState(initialPromotions);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; code: string; [key: string]: unknown } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   
-  const [formData, setFormData] = useState({ code: '', discount: '', maxUsage: 100, expiry: '', status: 'active' });
+  const [formData, setFormData] = useState<Partial<Promotion>>(() => ({
+    code: '',
+    discountType: 'fixed',
+    discountValue: 0,
+    minOrderValue: 0,
+    maxDiscountAmount: null,
+    startDate: new Date().toISOString().slice(0, 16),
+    endDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().slice(0, 16),
+    usageLimit: null,
+    perUserLimit: 1,
+    isActive: true,
+  }));
+
+  const fetchPromotions = async () => {
+    const auth = getAuth();
+    if (!auth?.token) return;
+    try {
+      const items = await promotionService.getPromotions(auth.token);
+      setPromotions(items);
+    } catch {
+      toast.error('Lỗi tải danh sách khuyến mãi');
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    const initFetch = async () => {
+      const auth = getAuth();
+      if (!auth?.token) return;
+      try {
+        const items = await promotionService.getPromotions(auth.token);
+        if (active) setPromotions(items);
+      } catch {
+        toast.error('Lỗi tải danh sách khuyến mãi');
+      }
+    };
+    void initFetch();
+    return () => { active = false; };
+  }, []);
 
   const openAdd = () => {
     setEditingId(null);
-    setFormData({ code: '', discount: '', maxUsage: 100, expiry: '', status: 'active' });
+    setFormData({
+      code: '',
+      discountType: 'fixed',
+      discountValue: 0,
+      minOrderValue: 0,
+      maxDiscountAmount: null,
+      startDate: new Date().toISOString().slice(0, 16),
+      endDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().slice(0, 16),
+      usageLimit: null,
+      perUserLimit: 1,
+      isActive: true,
+    });
     setIsModalOpen(true);
   };
 
-  const openEdit = (p: { id: number; code: string; discount: string; maxUsage: number; expiry: string; status: string }) => {
+  const openEdit = (p: Promotion) => {
     setEditingId(p.id);
-    setFormData({ code: p.code, discount: p.discount, maxUsage: p.maxUsage, expiry: p.expiry, status: p.status });
+    setFormData({
+      code: p.code,
+      discountType: p.discountType,
+      discountValue: p.discountValue,
+      minOrderValue: p.minOrderValue,
+      maxDiscountAmount: p.maxDiscountAmount,
+      startDate: p.startDate ? new Date(p.startDate).toISOString().slice(0, 16) : '',
+      endDate: p.endDate ? new Date(p.endDate).toISOString().slice(0, 16) : '',
+      usageLimit: p.usageLimit,
+      perUserLimit: p.perUserLimit,
+      isActive: p.isActive,
+    });
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (!formData.code.trim()) { toast.error('Vui lòng nhập mã khuyến mãi'); return; }
+  const handleSave = async () => {
+    if (!formData.code?.trim()) { toast.error('Vui lòng nhập mã khuyến mãi'); return; }
+    const auth = getAuth();
+    if (!auth?.token) return;
     
-    if (editingId) {
-      setPromotions(prev => prev.map(p => p.id === editingId ? { ...p, ...formData } : p));
-      toast.success('Cập nhật khuyến mãi thành công!');
-    } else {
-      setPromotions(prev => [{ id: Date.now(), ...formData, usage: 0 }, ...prev]);
-      toast.success('Thêm khuyến mãi thành công!');
+    try {
+      if (editingId) {
+        await promotionService.updatePromotion(editingId, formData, auth.token);
+        toast.success('Cập nhật khuyến mãi thành công!');
+      } else {
+        await promotionService.createPromotion(formData, auth.token);
+        toast.success('Thêm khuyến mãi thành công!');
+      }
+      setIsModalOpen(false);
+      void fetchPromotions();
+    } catch (error: unknown) {
+      toast.error((error as Error).message || 'Lỗi lưu khuyến mãi');
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setPromotions(prev => prev.filter(p => p.id !== deleteTarget.id));
-    toast.success(`Đã xóa mã "${deleteTarget.code}"!`);
-    setDeleteTarget(null);
+    const auth = getAuth();
+    if (!auth?.token) return;
+    try {
+      await promotionService.deletePromotion(deleteTarget.id, auth.token);
+      toast.success(`Đã xóa mã "${deleteTarget.code}"!`);
+      setDeleteTarget(null);
+      void fetchPromotions();
+    } catch {
+      toast.error('Lỗi xóa khuyến mãi');
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Khuyến mãi & Voucher</h1>
@@ -84,17 +154,17 @@ export const ContentPromotionsPage: React.FC = () => {
                     <span className="text-sm font-bold text-purple-500 dark:text-purple-400">%</span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold tracking-wider">{promo.code} <span className="text-emerald-500 dark:text-emerald-400 ml-1">-{promo.discount}</span></h3>
-                    <p className="text-xs opacity-50 mt-1">{promo.usage}/{promo.maxUsage} đã dùng • ⏳ {promo.expiry}</p>
+                    <h3 className="text-sm font-bold tracking-wider">{promo.code} <span className="text-emerald-500 dark:text-emerald-400 ml-1">-{promo.discountType === 'percent' ? promo.discountValue + '%' : promo.discountValue.toLocaleString() + 'đ'}</span></h3>
+                    <p className="text-xs opacity-50 mt-1">{promo.usedCount}/{promo.usageLimit || '∞'} đã dùng</p>
                   </div>
                 </div>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${promo.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
-                  {promo.status === 'active' ? 'Hoạt động' : 'Hết hạn'}
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${promo.isActive ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
+                  {promo.isActive ? 'Hoạt động' : 'Tạm dừng'}
                 </span>
               </div>
               <div className="mt-4 flex items-center gap-3">
                 <div className="flex-1 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(promo.usage / promo.maxUsage) * 100}%` }} />
+                  <div className="h-full bg-indigo-500 rounded-full" style={{ width: promo.usageLimit ? `${(promo.usedCount / promo.usageLimit) * 100}%` : '0%' }} />
                 </div>
                 <div className="flex gap-1.5 transition-opacity">
                   <button onClick={() => openEdit(promo)} className="w-7 h-7 rounded flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-white/[0.1] transition-all border-none outline-none"><Edit2 size={12} /></button>
@@ -107,13 +177,13 @@ export const ContentPromotionsPage: React.FC = () => {
       ) : (
         <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.02]">
                   <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Mã KM</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Giảm</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Đã dùng</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Hạn dùng</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Mức giảm</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Đã dùng / Giới hạn</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Giới hạn 1 người</th>
                   <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
                   <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
                 </tr>
@@ -130,25 +200,25 @@ export const ContentPromotionsPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400">-{promo.discount}</p>
+                      <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400">-{promo.discountType === 'percent' ? promo.discountValue + '%' : promo.discountValue.toLocaleString() + 'đ'}</p>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1.5 w-32">
                         <div className="flex justify-between text-[10px] text-white/60">
-                          <span>{promo.usage}</span>
-                          <span>{promo.maxUsage}</span>
+                          <span>{promo.usedCount}</span>
+                          <span>{promo.usageLimit || '∞'}</span>
                         </div>
                         <div className="w-full h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${(promo.usage / promo.maxUsage) * 100}%` }} />
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: promo.usageLimit ? `${(promo.usedCount / promo.usageLimit) * 100}%` : '0%' }} />
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-center text-sm text-white/80">
-                      {promo.expiry}
+                      {promo.perUserLimit} lần
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${promo.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
-                        {promo.status === 'active' ? 'Hoạt động' : 'Hết hạn'}
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${promo.isActive ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
+                        {promo.isActive ? 'Hoạt động' : 'Tạm dừng'}
                       </span>
                     </td>
                     <td className="p-4">
@@ -171,46 +241,79 @@ export const ContentPromotionsPage: React.FC = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setIsModalOpen(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-[#1A1A1A] border border-white/[0.08] rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between p-5 border-b border-white/[0.06] sticky top-0 z-10">
+              className="bg-[#1A1A1A] border border-white/[0.08] rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-5 border-b border-white/[0.06] shrink-0">
                 <h3 className="text-lg font-semibold">{editingId ? 'Chỉnh sửa mã' : 'Thêm mã khuyến mãi'}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center opacity-40 hover:opacity-100 hover:bg-white/[0.08] transition-all border-none outline-none"><X size={16} /></button>
               </div>
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium opacity-40 mb-1.5">Mã Code</label>
+              
+              <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Mã Code (Chữ hoa)</label>
                     <input type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})} placeholder="VD: SUMMER50"
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm uppercase outline-none focus:border-indigo-500/50 transition-all" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium opacity-40 mb-1.5">Mức giảm</label>
-                    <input type="text" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} placeholder="VD: 15% hoặc 50k"
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Loại giảm giá</label>
+                    <select value={formData.discountType} onChange={e => setFormData({...formData, discountType: e.target.value as 'fixed'|'percent'})}
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      <option value="fixed" className="bg-white dark:bg-[#1A1A1A]">Giảm tiền trực tiếp (VNĐ)</option>
+                      <option value="percent" className="bg-white dark:bg-[#1A1A1A]">Giảm theo %</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Mức giảm ({formData.discountType === 'percent' ? '%' : 'VNĐ'})</label>
+                    <input type="number" value={formData.discountValue || ''} onChange={e => setFormData({...formData, discountValue: Number(e.target.value)})}
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Đơn hàng tối thiểu (VNĐ)</label>
+                    <input type="number" value={formData.minOrderValue || ''} onChange={e => setFormData({...formData, minOrderValue: Number(e.target.value)})}
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium opacity-40 mb-1.5">Lượt dùng tối đa</label>
-                    <input type="number" value={formData.maxUsage} onChange={e => setFormData({...formData, maxUsage: Number(e.target.value)})}
-                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Tổng lượt sử dụng tối đa (Bỏ trống = ∞)</label>
+                    <input type="number" value={formData.usageLimit || ''} onChange={e => setFormData({...formData, usageLimit: e.target.value ? Number(e.target.value) : null})}
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" placeholder="∞" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium opacity-40 mb-1.5">Ngày hết hạn</label>
-                    <input type="date" value={formData.expiry} onChange={e => setFormData({...formData, expiry: e.target.value})}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Giới hạn mỗi user (Số lần)</label>
+                    <input type="number" value={formData.perUserLimit || ''} onChange={e => setFormData({...formData, perUserLimit: Number(e.target.value)})} min="1"
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Ngày bắt đầu</label>
+                    <input type="datetime-local" value={formData.startDate || ''} onChange={e => setFormData({...formData, startDate: e.target.value})}
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-xs font-medium opacity-60 mb-1.5">Ngày kết thúc</label>
+                    <input type="datetime-local" value={formData.endDate || ''} onChange={e => setFormData({...formData, endDate: e.target.value})}
+                      className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
+                  </div>
+                </div>
+                
                 <div>
-                  <label className="block text-xs font-medium opacity-40 mb-1.5">Trạng thái</label>
-                  <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all">
-                    <option value="active">Hoạt động</option>
-                    <option value="expired">Hết hạn</option>
-                  </select>
+                  <label className="block text-xs font-medium opacity-60 mb-1.5">Trạng thái</label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} className="accent-indigo-500 w-4 h-4" />
+                    <span className="text-sm">Hoạt động (Cho phép sử dụng)</span>
+                  </label>
                 </div>
               </div>
-              <div className="flex gap-3 px-5 pb-5">
+
+              <div className="flex gap-3 p-5 border-t border-white/[0.06] shrink-0">
                 <button onClick={() => setIsModalOpen(false)} className="flex-1 h-10 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm opacity-70 hover:opacity-100 transition-all outline-none">Hủy</button>
                 <button onClick={handleSave} className="flex-1 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm text-white font-medium transition-all outline-none border-none flex items-center justify-center gap-2">
                   <Save size={14} /> Lưu

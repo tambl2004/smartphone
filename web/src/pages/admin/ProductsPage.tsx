@@ -304,10 +304,11 @@ export const ProductsPage: React.FC = () => {
                     <div>
                       <label className="block text-xs font-medium text-white/40 mb-1.5">Danh mục</label>
                       <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
-                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
-                        <option value="Điện thoại">Điện thoại</option>
-                        <option value="Máy tính bảng">Máy tính bảng</option>
-                        <option value="Phụ kiện">Phụ kiện</option>
+                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                        <option value="Điện thoại" className="bg-white dark:bg-[#1A1A1A]">Điện thoại</option>
+                        <option value="Máy tính bảng" className="bg-white dark:bg-[#1A1A1A]">Máy tính bảng</option>
+                        <option value="Phụ kiện" className="bg-white dark:bg-[#1A1A1A]">Phụ kiện</option>
                       </select>
                     </div>
                     <InputField label="Thương hiệu" value={formData.brand} onChange={v => setFormData({...formData, brand: v})} placeholder="VD: Apple" />
@@ -317,10 +318,11 @@ export const ProductsPage: React.FC = () => {
                     <div>
                       <label className="block text-xs font-medium text-white/40 mb-1.5">Trạng thái</label>
                       <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
-                        <option value="active">Đang bán</option>
-                        <option value="draft">Nháp</option>
-                        <option value="outOfStock">Hết hàng</option>
+                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
+                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                        <option value="active" className="bg-white dark:bg-[#1A1A1A]">Đang bán</option>
+                        <option value="draft" className="bg-white dark:bg-[#1A1A1A]">Nháp</option>
+                        <option value="outOfStock" className="bg-white dark:bg-[#1A1A1A]">Hết hàng</option>
                       </select>
                     </div>
                   </div>

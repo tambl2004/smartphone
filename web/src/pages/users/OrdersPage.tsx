@@ -1,0 +1,244 @@
+import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
+import { Package, Clock, CheckCircle2, Truck, XCircle, ArrowRight, X, Printer, ArrowLeft } from 'lucide-react';
+import { getAuth } from '@services/auth.service';
+import { orderService, OrderRecord } from '@services/order.service';
+import { formatPrice, formatDate } from '@utils/format';
+import { Link } from '@routes/router';
+
+const statusMap: Record<string, { label: string, color: string, icon: React.ReactNode }> = {
+  pending: { label: 'Chờ xác nhận', color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20', icon: <Clock size={14} /> },
+  confirmed: { label: 'Đã xác nhận', color: 'text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200 dark:border-blue-500/20', icon: <CheckCircle2 size={14} /> },
+  shipping: { label: 'Đang giao', color: 'text-purple-600 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400 border-purple-200 dark:border-purple-500/20', icon: <Truck size={14} /> },
+  delivered: { label: 'Đã giao', color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20', icon: <CheckCircle2 size={14} /> },
+  cancelled: { label: 'Đã hủy', color: 'text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20', icon: <XCircle size={14} /> },
+};
+
+export const UserOrdersPage: React.FC = () => {
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const auth = getAuth();
+      if (!auth?.token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const data = await orderService.getMyOrders(auth.token);
+        setOrders(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchOrders();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] pt-32 pb-32">
+      <div className="max-w-[1000px] w-full mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 md:mb-12"
+        >
+          <span className="text-[11px] font-bold tracking-[0.2em] text-neutral-400 uppercase block mb-3">NEXPHONE / TÀI KHOẢN</span>
+          <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-black dark:text-white leading-[1]">
+            Đơn hàng<br /><span className="text-neutral-300 dark:text-neutral-700">của tôi</span>
+          </h1>
+        </motion.div>
+
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse bg-neutral-100 dark:bg-neutral-900 rounded-2xl h-32 w-full"></div>
+            ))}
+          </div>
+        ) : orders.length > 0 ? (
+          <div className="space-y-4">
+            {orders.map((order, idx) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 transition-all hover:border-black dark:hover:border-neutral-600"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="font-bold text-black dark:text-white text-lg">{order.orderCode}</span>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${statusMap[order.status]?.color || 'bg-neutral-100 text-neutral-600'}`}>
+                        {statusMap[order.status]?.icon}
+                        {statusMap[order.status]?.label || order.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-neutral-500">Đặt ngày: {formatDate(order.createdAt)}</p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-sm text-neutral-500 mb-1">Tổng tiền</p>
+                    <p className="font-black text-black dark:text-white text-xl tracking-tight">{formatPrice(order.totalAmount)}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-neutral-500 flex items-center gap-2">
+                    <Package size={16} /> {order.items?.length || 0} sản phẩm
+                  </div>
+                  <button 
+                    onClick={() => setSelectedOrder(order)}
+                    className="text-sm font-bold text-black dark:text-white hover:opacity-70 transition-opacity"
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center py-20 bg-neutral-50 dark:bg-neutral-900/30 rounded-3xl border border-dashed border-neutral-200 dark:border-neutral-800">
+            <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center text-neutral-400 mb-6">
+              <Package size={40} strokeWidth={1} />
+            </div>
+            <h3 className="text-2xl font-black tracking-tight text-black dark:text-white mb-2">Chưa có đơn hàng</h3>
+            <p className="text-neutral-500 max-w-md mb-8">Bạn chưa đặt mua sản phẩm nào. Khám phá các dòng điện thoại cao cấp của chúng tôi ngay hôm nay.</p>
+            <Link to="/products" className="inline-flex h-12 items-center justify-center bg-black text-white dark:bg-white dark:text-black px-8 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2">
+              Khám phá sản phẩm <ArrowRight size={16} />
+            </Link>
+          </motion.div>
+        )}
+      </div>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+          >
+            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
+              <div>
+                <h3 className="text-xl font-black text-black dark:text-white mb-1">Chi tiết đơn hàng</h3>
+                <p className="text-sm text-neutral-500">Mã đơn: <strong className="text-black dark:text-white">{selectedOrder.orderCode}</strong></p>
+              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+              <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                  <div className="flex items-center justify-between mb-8 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl">
+                    <div>
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Trạng thái</p>
+                      <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${statusMap[selectedOrder.status]?.color?.split(' ')[0] || 'text-neutral-600'}`}>
+                        {statusMap[selectedOrder.status]?.icon}
+                        {statusMap[selectedOrder.status]?.label || selectedOrder.status}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Ngày đặt</p>
+                      <p className="text-sm font-bold text-black dark:text-white">{formatDate(selectedOrder.createdAt)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Thông tin giao hàng</h4>
+                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Người nhận</span>
+                        <span className="font-semibold text-black dark:text-white">{selectedOrder.customerName}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Điện thoại</span>
+                        <span className="font-semibold text-black dark:text-white">{selectedOrder.customerPhone}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Địa chỉ</span>
+                        <span className="font-semibold text-black dark:text-white leading-relaxed">{selectedOrder.shippingAddress}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-neutral-500 text-xs font-bold uppercase tracking-wider">Thanh toán</span>
+                        <span className="font-semibold text-black dark:text-white uppercase">{selectedOrder.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng' : selectedOrder.paymentMethod}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="w-full lg:w-1/2 flex flex-col bg-neutral-50/50 dark:bg-neutral-800/20">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                  <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Sản phẩm ({selectedOrder.items?.length || 0})</h4>
+                  <div className="space-y-4">
+                    {selectedOrder.items?.map((item, i) => (
+                      <div key={i} className="flex items-center gap-4 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 last:pb-0">
+                        <div className="w-16 h-16 rounded-xl bg-white dark:bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-100 dark:border-neutral-700">
+                          {item.productImage ? (
+                            <img 
+                              src={item.productImage.startsWith('http') ? item.productImage : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '') + (item.productImage.startsWith('/') ? '' : '/') + item.productImage} 
+                              alt={item.productName} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <Package className="w-8 h-8 m-4 text-neutral-300" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-black dark:text-white truncate">{item.productName}</p>
+                          <p className="text-xs text-neutral-500 mt-1">Số lượng: {item.quantity}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-black dark:text-white">{formatPrice(item.lineTotal)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-neutral-100 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 flex flex-col gap-3 backdrop-blur-sm">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-neutral-500">Tạm tính:</span>
+                    <span className="font-semibold text-black dark:text-white">{formatPrice(selectedOrder.subtotalAmount || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-neutral-500">
+                      Giảm giá {selectedOrder.promotionCode ? <span className="font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md ml-1">{selectedOrder.promotionCode}</span> : ''}:
+                    </span>
+                    <span className="font-semibold text-emerald-600">-{formatPrice(selectedOrder.discountAmount || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
+                    <span className="font-bold text-black dark:text-white">Tổng thanh toán:</span>
+                    <span className="text-2xl font-black text-black dark:text-white tracking-tight">{formatPrice(selectedOrder.totalAmount)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center">
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="inline-flex h-12 items-center justify-center bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
+              >
+                <ArrowLeft size={16} /> Quay lại
+              </button>
+              <button 
+                onClick={() => window.print()}
+                className="inline-flex h-12 items-center justify-center bg-black text-white dark:bg-white dark:text-black px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
+              >
+                <Printer size={16} /> In hóa đơn
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+};
