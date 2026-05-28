@@ -23,8 +23,8 @@ import { CustomersPage } from '@pages/admin/CustomersPage';
 import { ContentBannersPage } from '@pages/admin/BannersPage';
 import { ContentPromotionsPage } from '@pages/admin/PromotionsPage';
 import { ContentCategoriesPage } from '@pages/admin/CategoriesPage';
-import { ContentBrandsPage } from '@pages/admin/BrandsPage';
 import { ReportsPage } from '@pages/admin/ReportsPage';
+import { FaqsPage } from '@pages/admin/FaqsPage';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -57,7 +57,8 @@ function AppContent() {
         <Route path="/admin/content/banners" element={<ContentBannersPage />} />
         <Route path="/admin/content/promotions" element={<ContentPromotionsPage />} />
         <Route path="/admin/content/categories" element={<ContentCategoriesPage />} />
-        <Route path="/admin/content/brands" element={<ContentBrandsPage />} />
+        <Route path="/admin/content/faqs" element={<FaqsPage />} />
+
         {/* Redirect /admin/content to the first sub-page */}
         {basePath === '/admin/content' && <Route path="/admin/content" element={<ContentBannersPage />} />}
         <Route path="/admin/reports" element={<ReportsPage />} />

@@ -3,12 +3,20 @@ import { Product } from '@types';
 import { Card } from '@components/common/Card';
 import { Button } from '@components/common/Button';
 import { formatPrice } from '@utils/format';
-import { getDiscountPercentage } from '@utils/helpers';
 import { useCart } from '@hooks/useCart';
 import { useWishlist } from '@hooks/useWishlist';
 import { Link, useRouter } from '@routes/router';
 import { Heart, Eye, ShoppingCart, Star } from 'lucide-react';
 import { motion } from 'motion/react';
+
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
+const getPrimaryImage = (product: Product): string => {
+  if (!product.images || product.images.length === 0) return 'https://placehold.co/400x400?text=No+Image';
+  const primary = product.images.find((img) => img.isPrimary) ?? product.images[0];
+  if (primary.imageUrl.startsWith('http')) return primary.imageUrl;
+  return `${API_URL}${primary.imageUrl}`;
+};
 
 interface ProductCardProps {
   product: Product;
@@ -20,7 +28,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const isWish = isInWishlist(product.id);
-  const discount = getDiscountPercentage(product.originalPrice, product.price);
+  const discount = product.discountPercent ?? 0;
+  const imageUrl = getPrimaryImage(product);
 
   return (
     <motion.div className="h-full">
@@ -28,7 +37,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
         <div className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
           <Link to={`/product/${product.id}`} className="absolute inset-0">
             <img 
-              src={product.image} 
+              src={imageUrl} 
               alt={product.name} 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
             />
@@ -60,7 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
           
           <div className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 mb-4">
             <Star size={13} className="fill-amber-500 text-amber-500 mr-0.5" />
-            <span className="font-bold text-neutral-800 dark:text-neutral-200">{product.rating}</span>
+            <span className="font-bold text-neutral-800 dark:text-neutral-200">{Number(product.rating).toFixed(1)}</span>
             <span className="text-neutral-400 ml-0.5">({product.reviewsCount})</span>
           </div>
 

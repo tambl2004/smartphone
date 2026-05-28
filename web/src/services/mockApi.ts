@@ -1,8 +1,8 @@
 import productsData from '@data/products.json';
 import categoriesData from '@data/categories.json';
-import brandsData from '@data/brands.json';
+
 import bannersData from '@data/banners.json';
-import { Product, Category, Brand } from '@types';
+import { Product, Category } from '@types';
 
 // Giả lập delay mạng (để loading skeleton hiển thị mượt mà)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -21,14 +21,11 @@ export const mockApi = {
 
     if (filters) {
       if (filters.category && filters.category !== 'all') {
-        list = list.filter(p => p.category === filters.category);
-      }
-      if (filters.brand) {
-        list = list.filter(p => p.brand.toLowerCase() === filters.brand?.toLowerCase());
+        list = list.filter(p => String(p.categoryId) === String(filters.category));
       }
       if (filters.search) {
         const q = filters.search.toLowerCase().trim();
-        list = list.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
+        list = list.filter(p => p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
       }
       if (filters.minPrice !== undefined) {
         list = list.filter(p => p.price >= filters.minPrice!);
@@ -59,12 +56,7 @@ export const mockApi = {
 
   getCategories: async (): Promise<Category[]> => {
     await delay(200);
-    return categoriesData as Category[];
-  },
-
-  getBrands: async (): Promise<Brand[]> => {
-    await delay(200);
-    return brandsData as Brand[];
+    return (categoriesData as Record<string, unknown>[]).map(c => ({ ...c, id: Number(c.id) })) as unknown as Category[];
   },
 
   getBanners: async () => {

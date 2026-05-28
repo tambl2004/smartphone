@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Category, Brand } from '@types';
-import { mockApi } from '@services/mockApi';
+import { Category } from '@types';
+import { getCategories } from '@services/product.service';
 import filterConfig from '@data/filters.json';
 import { Filter, RotateCcw } from 'lucide-react';
 
 interface ProductFilterProps {
-  selectedCategory?: string;
-  onCategoryChange: (category?: string) => void;
+  selectedCategoryId?: number;
+  onCategoryChange: (categoryId?: number) => void;
   selectedBrand?: string;
-  onBrandChange: (brand?: string) => void;
+  onBrandChange: (brandName?: string) => void;
   selectedPriceRange: { min: number; max: number };
   onPriceRangeChange: (min: number, max: number) => void;
   onReset: () => void;
 }
 
 export const ProductFilter: React.FC<ProductFilterProps> = ({
-  selectedCategory,
+  selectedCategoryId,
   onCategoryChange,
   selectedBrand,
   onBrandChange,
@@ -24,11 +24,10 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
   onReset
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const brands = ['Apple', 'Samsung', 'OPPO', 'Xiaomi', 'Vivo', 'Realme', 'OnePlus', 'Huawei'];
 
   useEffect(() => {
-    mockApi.getCategories().then(setCategories);
-    mockApi.getBrands().then(setBrands);
+    void getCategories().then(setCategories);
   }, []);
 
   return (
@@ -54,7 +53,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
         <div className="flex flex-col gap-2">
           <label 
             className={`flex items-center justify-between px-4 py-2.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-              !selectedCategory || selectedCategory === 'all'
+              !selectedCategoryId
                 ? 'border-black dark:border-white bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white shadow-sm font-bold' 
                 : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
             }`}
@@ -62,12 +61,12 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
             <input
               type="radio"
               name="category"
-              checked={!selectedCategory || selectedCategory === 'all'}
+              checked={!selectedCategoryId}
               onChange={() => onCategoryChange(undefined)}
               className="sr-only"
             />
             <span>Tất cả danh mục</span>
-            {(!selectedCategory || selectedCategory === 'all') && (
+            {!selectedCategoryId && (
               <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
             )}
           </label>
@@ -76,7 +75,7 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
             <label 
               key={cat.id} 
               className={`flex items-center justify-between px-4 py-2.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-                selectedCategory === cat.id 
+                selectedCategoryId === cat.id 
                   ? 'border-black dark:border-white bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white shadow-sm font-bold' 
                   : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
@@ -84,15 +83,15 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
               <input
                 type="radio"
                 name="category"
-                checked={selectedCategory === cat.id}
+                checked={selectedCategoryId === cat.id}
                 onChange={() => onCategoryChange(cat.id)}
                 className="sr-only"
               />
               <span className="flex items-center gap-2">
-                <span>{cat.icon}</span>
+                {cat.icon && <span>{cat.icon}</span>}
                 <span>{cat.name}</span>
               </span>
-              {selectedCategory === cat.id && (
+              {selectedCategoryId === cat.id && (
                 <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
               )}
             </label>
@@ -124,11 +123,11 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
             )}
           </label>
           
-          {brands.map((b) => (
+          {brands.map((bName) => (
             <label 
-              key={b.id} 
+              key={bName} 
               className={`flex items-center justify-between px-4 py-2.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-                selectedBrand?.toLowerCase() === b.name.toLowerCase()
+                selectedBrand === bName
                   ? 'border-black dark:border-white bg-neutral-50 dark:bg-neutral-900 text-black dark:text-white shadow-sm font-bold' 
                   : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700'
               }`}
@@ -136,12 +135,12 @@ export const ProductFilter: React.FC<ProductFilterProps> = ({
               <input
                 type="radio"
                 name="brand"
-                checked={selectedBrand?.toLowerCase() === b.name.toLowerCase()}
-                onChange={() => onBrandChange(b.name)}
+                checked={selectedBrand === bName}
+                onChange={() => onBrandChange(bName)}
                 className="sr-only"
               />
-              <span>{b.name}</span>
-              {selectedBrand?.toLowerCase() === b.name.toLowerCase() && (
+              <span>{bName}</span>
+              {selectedBrand === bName && (
                 <div className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
               )}
             </label>

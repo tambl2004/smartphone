@@ -3,9 +3,10 @@ import type { Product } from '@types';
 import { Modal } from '@components/common/Modal';
 import { Button } from '@components/common/Button';
 import { formatPrice } from '@utils/format';
-import { getDiscountPercentage } from '@utils/helpers';
 import { useCart } from '@hooks/useCart';
 import { Star, Plus, Minus } from 'lucide-react';
+
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
 
 interface ProductQuickViewProps {
   product: Product | null;
@@ -23,7 +24,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   if (!product) return null;
 
-  const discount = getDiscountPercentage(product.originalPrice, product.price);
+  const discount = product.discountPercent ?? 0;
+  const primaryImg = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
+  const imageUrl = primaryImg ? (primaryImg.imageUrl.startsWith('http') ? primaryImg.imageUrl : `${API_URL}${primaryImg.imageUrl}`) : 'https://placehold.co/400x400?text=No+Image';
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -31,12 +34,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     setQuantity(1);
   };
 
+  const topSpecs = (product.specs ?? []).slice(0, 3);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={product.name}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-1">
         {/* Image side */}
         <div className="relative aspect-square rounded-md overflow-hidden bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center p-8">
-          <img src={product.image} alt={product.name} className="max-h-full object-contain" />
+          <img src={imageUrl} alt={product.name} className="max-h-full object-contain" />
           {discount > 0 && (
             <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded">
               -{discount}%
@@ -52,7 +57,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               <span className="text-neutral-300 dark:text-neutral-800">|</span>
               <div className="flex items-center gap-1">
                 <Star size={14} className="fill-amber-400 text-amber-400" />
-                <span><strong className="text-black dark:text-white font-semibold">{product.rating}</strong> ({product.reviewsCount} đánh giá)</span>
+                <span><strong className="text-black dark:text-white font-semibold">{Number(product.rating).toFixed(1)}</strong> ({product.reviewsCount} đánh giá)</span>
               </div>
             </div>
 
@@ -67,16 +72,18 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {product.description}
             </p>
 
-            <div className="space-y-2 pt-2">
-              <h5 className="text-xs font-bold uppercase tracking-wider text-black dark:text-white">Thông số kĩ thuật nổi bật:</h5>
-              <ul className="text-xs space-y-1.5 text-neutral-500 dark:text-neutral-400 pl-4 list-disc">
-                {Object.entries(product.specs).slice(0, 3).map(([key, val]) => (
-                  <li key={key}>
-                    <strong>{key}:</strong> {val as string}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {topSpecs.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-black dark:text-white">Thông số kĩ thuật nổi bật:</h5>
+                <ul className="text-xs space-y-1.5 text-neutral-500 dark:text-neutral-400 pl-4 list-disc">
+                  {topSpecs.map((spec) => (
+                    <li key={spec.specName}>
+                      <strong>{spec.specName}:</strong> {spec.specValue}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4 pt-4 border-t border-neutral-100 dark:border-neutral-900">

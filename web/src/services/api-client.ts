@@ -1,5 +1,5 @@
 import type { ApiResponse, PaginatedResponse } from '../types/api';
-import type { Brand, Category, Product, User } from '../types';
+import type { Category, Product, User, FAQ } from '../types';
 
 export type Order = Record<string, unknown>;
 
@@ -66,9 +66,12 @@ export const apiClient = {
   createCategory: (payload: Partial<Category>, token?: string) => request<{ id: number }>('/categories', { method: 'POST', body: JSON.stringify(payload), token }),
   updateCategory: (id: number, payload: Partial<Category>, token?: string) => request<null>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
 
-  getBrands: () => request<{ items: Brand[] }>('/brands'),
-  createBrand: (payload: Partial<Brand>, token?: string) => request<{ id: number }>('/brands', { method: 'POST', body: JSON.stringify(payload), token }),
-  updateBrand: (id: number, payload: Partial<Brand>, token?: string) => request<null>(`/brands/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
+  getFAQs: () => request<{ items: FAQ[] }>('/faqs'),
+  createFAQ: (payload: Partial<FAQ>, token?: string) => request<{ id: number }>('/faqs', { method: 'POST', body: JSON.stringify(payload), token }),
+  updateFAQ: (id: number, payload: Partial<FAQ>, token?: string) => request<null>(`/faqs/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
+  deleteFAQ: (id: number, token?: string) => request<null>(`/faqs/${id}`, { method: 'DELETE', token }),
+
+
 
   getUsers: (params?: ListParams, token?: string) => request<PaginatedResponse<User>['data']>(`/users${toQueryString(params)}`, { token }),
   getOrders: (params?: ListParams, token?: string) => request<PaginatedResponse<Order>['data']>(`/orders${toQueryString(params)}`, { token }),

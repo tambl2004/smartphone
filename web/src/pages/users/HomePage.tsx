@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Product, Category } from '@types';
-import { mockApi } from '@services/mockApi';
+import { Product, Category, FAQ } from '@types';
+import { getProducts, getCategories } from '@services/product.service';
+import { apiClient } from '../../services/api-client';
 import { ProductCard } from '@/components/users/product/ProductCard';
 import { ProductQuickView } from '@/components/users/product/ProductQuickView';
 import { Link, useRouter } from '@routes/router';
@@ -52,38 +53,26 @@ const testimonials = [
   },
 ];
 
-// FAQ data
-const faqs = [
-  {
-    q: 'Nexphone có bảo hành chính hãng không?',
-    a: 'Có. Tất cả sản phẩm tại Nexphone đều được bảo hành chính hãng 12 tháng. Ngoài ra chúng tôi còn hỗ trợ bảo hành mở rộng lên đến 24 tháng.',
-  },
-  {
-    q: 'Có hỗ trợ trả góp 0% không?',
-    a: 'Có. Nexphone hỗ trợ trả góp 0% lãi suất qua thẻ tín dụng Visa/Mastercard và các công ty tài chính uy tín. Thủ tục đơn giản, duyệt nhanh trong 15 phút.',
-  },
-  {
-    q: 'Thời gian giao hàng mất bao lâu?',
-    a: 'Nội thành HCM & Hà Nội: 1-2 giờ (giao hỏa tốc). Các tỉnh thành khác: 1-3 ngày làm việc. Miễn phí giao hàng cho đơn từ 5 triệu.',
-  },
-  {
-    q: 'Chính sách đổi trả như thế nào?',
-    a: 'Đổi trả miễn phí trong 30 ngày nếu sản phẩm lỗi do nhà sản xuất. Hoàn tiền 100% nếu không hài lòng trong 7 ngày đầu (máy chưa kích hoạt).',
-  },
-];
+
 
 export const HomePage: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { navigate } = useRouter();
 
   useEffect(() => {
-    mockApi.getProducts({ sort: 'featured' }).then((prods: Product[]) => {
-      setFeaturedProducts(prods.slice(0, 8));
+    void getProducts({ sortBy: 'id', sortOrder: 'desc', limit: 8 }).then((result) => {
+      setFeaturedProducts(result.items);
     });
-    mockApi.getCategories().then(setCategories);
+    void getCategories().then(setCategories);
+    void apiClient.getFAQs().then((res) => {
+      if (res.success && res.data) {
+        setFaqs(res.data.items);
+      }
+    });
   }, []);
 
   return (
@@ -174,9 +163,9 @@ export const HomePage: React.FC = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {categories.map((cat, idx) => {
-              // Map category ID to professional Lucide icons
-              const getIcon = (id: string) => {
-                switch (id) {
+              // Map category slug to professional Lucide icons
+              const getIcon = (slug: string) => {
+                switch (slug) {
                   case 'smartphones': return <Smartphone size={48} strokeWidth={1.2} />;
                   case 'tablets': return <Tablet size={48} strokeWidth={1.2} />;
                   case 'accessories': return <Headphones size={48} strokeWidth={1.2} />;
@@ -193,11 +182,11 @@ export const HomePage: React.FC = () => {
                   transition={{ delay: idx * 0.1 }}
                 >
                   <Link
-                    to={`/products?category=${cat.id}`}
+                    to={`/products?categoryId=${cat.id}`}
                     className="group relative overflow-hidden flex flex-col items-center justify-center p-10 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-xl hover:border-black dark:hover:border-white transition-all duration-500 hover:-translate-y-1"
                   >
                     <div className="relative z-10 text-neutral-400 group-hover:text-black dark:group-hover:text-white transition-colors duration-300 mb-6 transform group-hover:scale-110">
-                      {getIcon(cat.id)}
+                      {getIcon(cat.slug)}
                     </div>
                     <span className="relative z-10 font-bold text-black dark:text-white tracking-widest uppercase text-xs">{cat.name}</span>
                   </Link>
@@ -451,12 +440,12 @@ export const HomePage: React.FC = () => {
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                   className="w-full flex items-center justify-between p-5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
                 >
-                  <span className="font-semibold text-sm text-black dark:text-white pr-4">{faq.q}</span>
+                  <span className="font-semibold text-sm text-black dark:text-white pr-4">{faq.question}</span>
                   {openFaq === idx ? <ChevronUp size={18} className="text-neutral-400 flex-shrink-0" /> : <ChevronDown size={18} className="text-neutral-400 flex-shrink-0" />}
                 </button>
                 {openFaq === idx && (
                   <div className="px-5 pb-5 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                    {faq.a}
+                    {faq.answer}
                   </div>
                 )}
               </motion.div>

@@ -34,14 +34,14 @@ const apiMessageSchema = {
 
 const productSchema = {
   type: 'object',
-  required: ['slug', 'name', 'categoryId', 'brandId', 'price'],
+  required: ['slug', 'name', 'categoryId', 'brand', 'price'],
   properties: {
     id: { type: 'integer', example: 1, readOnly: true },
     slug: { type: 'string', example: 'iphone-15-pro-max' },
     sku: { type: 'string', nullable: true, example: 'IP15PM-256' },
     name: { type: 'string', example: 'iPhone 15 Pro Max 256GB' },
     categoryId: { type: 'integer', example: 1 },
-    brandId: { type: 'integer', example: 1 },
+    brand: { type: 'string', example: 'Apple' },
     price: { type: 'number', example: 29990000 },
     originalPrice: { type: 'number', nullable: true, example: 34990000 },
     discountPercent: { type: 'integer', example: 14 },
@@ -69,18 +69,6 @@ const categorySchema = {
 
 const categoryCreateUpdateSchema = categorySchema;
 
-const brandSchema = {
-  type: 'object',
-  required: ['slug', 'name'],
-  properties: {
-    id: { type: 'integer', example: 1, readOnly: true },
-    slug: { type: 'string', example: 'apple' },
-    name: { type: 'string', example: 'Apple' },
-    logoUrl: { type: 'string', nullable: true, example: 'https://...' },
-  },
-};
-
-const brandCreateUpdateSchema = brandSchema;
 
 const userSchema = {
   type: 'object',
@@ -149,8 +137,7 @@ const swaggerSpec = {
       ProductInput: productCreateUpdateSchema,
       Category: categorySchema,
       CategoryInput: categoryCreateUpdateSchema,
-      Brand: brandSchema,
-      BrandInput: brandCreateUpdateSchema,
+
       User: userSchema,
       UserInput: userCreateUpdateSchema,
       ApiMessage: apiMessageSchema,
@@ -230,15 +217,7 @@ const swaggerSpec = {
       put: { summary: 'Update a category', tags: ['Categories'], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryInput' } } } }, responses: { 200: { description: 'Category updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 404: { description: 'Category not found' }, 400: { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationError' } } } } } },
       delete: { summary: 'Delete a category', tags: ['Categories'], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Category deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 404: { description: 'Category not found' } } },
     },
-    '/api/brands': {
-      get: { summary: 'Get all brands', tags: ['Brands'], responses: { 200: { description: 'Brands retrieved successfully', content: { 'application/json': { schema: itemListResponse('Brand') } } } } },
-      post: { summary: 'Create a brand', tags: ['Brands'], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/BrandInput' } } } }, responses: { 201: { description: 'Brand created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 400: { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationError' } } } } } },
-    },
-    '/api/brands/{id}': {
-      get: { summary: 'Get brand by id', tags: ['Brands'], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Brand found', content: { 'application/json': { schema: itemResponse('Brand') } } }, 404: { description: 'Brand not found' } } },
-      put: { summary: 'Update a brand', tags: ['Brands'], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/BrandInput' } } } }, responses: { 200: { description: 'Brand updated successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 404: { description: 'Brand not found' }, 400: { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationError' } } } } } },
-      delete: { summary: 'Delete a brand', tags: ['Brands'], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Brand deleted successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 404: { description: 'Brand not found' } } },
-    },
+
     '/api/users': {
       get: { summary: 'Get all users', tags: ['Users'], responses: { 200: { description: 'Users retrieved successfully', content: { 'application/json': { schema: itemListResponse('User') } } } } },
       post: { summary: 'Create a user', tags: ['Users'], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UserInput' } } } }, responses: { 201: { description: 'User created successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiMessage' } } } }, 400: { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/ValidationError' } } } } } },
@@ -273,7 +252,7 @@ const swaggerSpec = {
                       properties: {
                         products: { type: 'integer' },
                         categories: { type: 'integer' },
-                        brands: { type: 'integer' },
+
                         customers: { type: 'integer' },
                         orders: { type: 'integer' },
                       },

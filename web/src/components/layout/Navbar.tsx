@@ -76,7 +76,7 @@ export const Navbar: React.FC = () => {
 
           {/* Right Block: Search & Actions */}
           <div className="flex items-center gap-4 sm:gap-5 text-black dark:text-white">
-            <form onSubmit={handleSearch} className="hidden lg:flex relative w-48 xl:w-60">
+            <form onSubmit={handleSearch} className="hidden lg:flex relative w-32 xl:w-48">
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
@@ -129,7 +129,7 @@ export const Navbar: React.FC = () => {
                       auth.user.fullName.charAt(0).toUpperCase()
                     )}
                   </div>
-                  <span className="text-sm font-semibold hidden sm:block max-w-[100px] truncate">
+                  <span className="text-sm font-semibold hidden sm:block max-w-[200px] lg:max-w-[300px] truncate">
                     {auth.user.fullName}
                   </span>
                 </div>

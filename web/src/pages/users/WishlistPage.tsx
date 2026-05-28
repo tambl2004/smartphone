@@ -7,6 +7,15 @@ import { Heart, X, Star, ShoppingCart, Eye } from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatPrice } from '@utils/format';
 
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
+const getProductImage = (prod: Product): string => {
+  if (!prod.images || prod.images.length === 0) return 'https://placehold.co/200x200?text=No+Image';
+  const primary = prod.images.find((img) => img.isPrimary) ?? prod.images[0];
+  if (primary.imageUrl.startsWith('http')) return primary.imageUrl;
+  return `${API_URL}${primary.imageUrl}`;
+};
+
 export const WishlistPage: React.FC = () => {
   const { items, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
@@ -75,7 +84,7 @@ export const WishlistPage: React.FC = () => {
               {/* Image */}
               <div className="w-full sm:w-32 lg:w-40 aspect-[4/3] sm:aspect-square bg-white dark:bg-black rounded-xl overflow-hidden relative flex-shrink-0">
                 <Link to={`/product/${prod.id}`}>
-                  <img src={prod.image} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <img src={getProductImage(prod)} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </Link>
                 <button
                   onClick={() => toggleWishlist(prod)}

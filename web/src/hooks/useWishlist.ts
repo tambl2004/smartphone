@@ -31,6 +31,6 @@ export const useWishlistStore = create<WishlistState>()(
 
 export function useWishlist() {
   const store = useWishlistStore();
-  const isInWishlist = (productId: string) => store.items.some(item => item.id === productId);
+  const isInWishlist = (productId: number) => store.items.some(item => item.id === productId);
   return { ...store, isInWishlist };
 }

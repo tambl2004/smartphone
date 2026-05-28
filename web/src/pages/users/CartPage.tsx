@@ -6,23 +6,35 @@ import { CartItem } from '@types';
 import { ShoppingCart, Trash2, ArrowLeft, Plus, Minus, CreditCard, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
+const getProductImage = (item: CartItem): string => {
+  if (!item.product.images || item.product.images.length === 0) return 'https://placehold.co/100x100?text=No+Image';
+  const primary = item.product.images.find((img) => img.isPrimary) ?? item.product.images[0];
+  if (primary.imageUrl.startsWith('http')) return primary.imageUrl;
+  return `${API_URL}${primary.imageUrl}`;
+};
+
 export const CartPage: React.FC = () => {
   const { items, removeFromCart, updateQuantity, clearCart } = useCart();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { navigate } = useRouter();
 
   // Khởi tạo: mặc định chọn tất cả sản phẩm
   useEffect(() => {
-    if (items.length === 0) {
-      setSelectedIds([]);
-      return;
-    }
-    setSelectedIds(prev => {
-      if (prev.length === 0) {
-        return items.map(item => item.product.id);
+    const timer = setTimeout(() => {
+      if (items.length === 0) {
+        setSelectedIds([]);
+        return;
       }
-      return prev.filter(id => items.some(item => item.product.id === id));
-    });
+      setSelectedIds(prev => {
+        if (prev.length === 0) {
+          return items.map(item => item.product.id);
+        }
+        return prev.filter(id => items.some(item => item.product.id === id));
+      });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [items]);
 
   const selectedItems = items.filter(item => selectedIds.includes(item.product.id));
@@ -34,7 +46,7 @@ export const CartPage: React.FC = () => {
     else setSelectedIds(items.map(item => item.product.id));
   };
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (id: number) => {
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter(i => i !== id));
     } else {
@@ -152,7 +164,7 @@ export const CartPage: React.FC = () => {
                       </button>
 
                       <Link to={`/product/${item.product.id}`} className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-white dark:bg-black flex-shrink-0 overflow-hidden flex items-center justify-center p-2 relative group">
-                        <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                        <img src={getProductImage(item)} alt={item.product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                       </Link>
 
                       {/* Mobile Title */}

@@ -10,10 +10,9 @@ const getCount = async (table: string) => {
 };
 
 export const getDashboardSummary = async () => {
-  const [products, categories, brands, customers, orders] = await Promise.all([
+  const [products, categories, customers, orders] = await Promise.all([
     getCount('products'),
     getCount('categories'),
-    getCount('brands'),
     getCount('customers'),
     getCount('orders'),
   ]);
@@ -21,7 +20,6 @@ export const getDashboardSummary = async () => {
   return {
     products,
     categories,
-    brands,
     customers,
     orders,
   };

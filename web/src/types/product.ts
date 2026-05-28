@@ -1,30 +1,50 @@
+export interface ProductImage {
+  id?: number;
+  imageUrl: string;
+  sortOrder: number;
+  isPrimary: number;
+}
+
+export interface ProductSpec {
+  specName: string;
+  specValue: string;
+  sortOrder: number;
+}
+
 export interface Product {
-  id: string;
+  id: number;
+  slug: string;
+  sku: string | null;
   name: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  image: string;
-  images: string[];
-  category: string;
+  categoryId: number;
+  categoryName: string;
+  categorySlug: string;
   brand: string;
+
+  price: number;
+  originalPrice: number | null;
+  discountPercent: number;
   rating: number;
   reviewsCount: number;
   stock: number;
-  description: string;
-  specs: Record<string, string>;
-  featured?: boolean;
+  description: string | null;
+  featured: number;
+  status: 'active' | 'draft' | 'out_of_stock' | 'hidden';
+  additionalSpecs?: Array<{ name: string; value: string }>;
+  images: ProductImage[];
+  specs: ProductSpec[];
+  createdAt?: string;
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   slug: string;
-  icon?: string;
+  icon?: string | null;
 }
 
 export interface Brand {
-  id: string;
+  id: number;
   name: string;
   logo?: string;
 }

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '@types';
-import { mockApi } from '@services/mockApi';
+import { getProductById } from '@services/product.service';
 import { useParams } from '@routes/router';
 import { formatPrice } from '@utils/format';
-import { getDiscountPercentage } from '@utils/helpers';
 import { useCart } from '@hooks/useCart';
 import { useWishlist } from '@hooks/useWishlist';
 import { Button } from '@components/common/Button';
@@ -25,7 +24,7 @@ export const ProductDetailPage: React.FC = () => {
     if (!id) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true);
-    mockApi.getProductById(id).then((prod: Product | null) => {
+    void getProductById(Number(id)).then((prod) => {
       if (prod) {
         setProduct(prod);
       }
@@ -55,7 +54,7 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const discount = getDiscountPercentage(product.originalPrice, product.price);
+  const discount = product.discountPercent ?? 0;
   const isWish = isInWishlist(product.id);
 
   return (
@@ -94,7 +93,7 @@ export const ProductDetailPage: React.FC = () => {
               
               <div className="flex items-center gap-4 text-sm mb-8">
                 <div className="flex items-center gap-1 text-yellow-500 font-bold">
-                  <Star size={16} className="fill-current" /> {product.rating} <span className="text-neutral-500 ml-1 font-medium">({product.reviewsCount} đánh giá)</span>
+                  <Star size={16} className="fill-current" /> {Number(product.rating).toFixed(1)} <span className="text-neutral-500 ml-1 font-medium">({product.reviewsCount} đánh giá)</span>
                 </div>
                 <div className="w-1.5 h-1.5 bg-neutral-300 dark:bg-neutral-700 rounded-full"></div>
                 <div className={`font-bold tracking-wide text-xs uppercase ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -167,17 +166,19 @@ export const ProductDetailPage: React.FC = () => {
               </div>
 
               {/* Specs */}
-              <div>
-                <h3 className="text-xl font-bold mb-6 tracking-tight text-black dark:text-white">Thông số kỹ thuật chi tiết</h3>
-                <div className="border border-neutral-200 dark:border-neutral-800 rounded-md overflow-hidden">
-                  {Object.entries(product.specs).map(([key, val], idx) => (
-                    <div key={key} className={`flex px-6 py-5 ${idx !== 0 ? 'border-t border-neutral-200 dark:border-neutral-800' : ''} ${idx % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-900'}`}>
-                      <div className="w-1/3 text-xs font-bold uppercase tracking-wider text-neutral-500">{key}</div>
-                      <div className="w-2/3 text-sm text-black dark:text-white font-semibold">{val as string}</div>
-                    </div>
-                  ))}
+              {product.specs && product.specs.length > 0 && (
+                <div>
+                  <h3 className="text-xl font-bold mb-6 tracking-tight text-black dark:text-white">Thông số kỹ thuật chi tiết</h3>
+                  <div className="border border-neutral-200 dark:border-neutral-800 rounded-md overflow-hidden">
+                    {product.specs.map((spec, idx) => (
+                      <div key={spec.specName} className={`flex px-6 py-5 ${idx !== 0 ? 'border-t border-neutral-200 dark:border-neutral-800' : ''} ${idx % 2 === 0 ? 'bg-neutral-50 dark:bg-neutral-900/50' : 'bg-white dark:bg-neutral-900'}`}>
+                        <div className="w-1/3 text-xs font-bold uppercase tracking-wider text-neutral-500">{spec.specName}</div>
+                        <div className="w-2/3 text-sm text-black dark:text-white font-semibold">{spec.specValue}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           </div>
         </div>

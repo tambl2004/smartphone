@@ -6,6 +6,15 @@ import { CartItem } from '@types';
 import { CheckCircle2, Package, Banknote, CreditCard, ArrowRight, Sparkles, MapPin, Ticket } from 'lucide-react';
 import { motion } from 'motion/react';
 
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
+const getProductImage = (item: CartItem): string => {
+  if (!item.product.images || item.product.images.length === 0) return 'https://placehold.co/100x100?text=No+Image';
+  const primary = item.product.images.find((img) => img.isPrimary) ?? item.product.images[0];
+  if (primary.imageUrl.startsWith('http')) return primary.imageUrl;
+  return `${API_URL}${primary.imageUrl}`;
+};
+
 const MOCK_ADDRESS = {
   name: 'Nguyễn Văn A',
   phone: '0987 654 321',
@@ -218,7 +227,7 @@ export const CheckoutPage: React.FC = () => {
                 {items.map((item: CartItem) => (
                   <div key={item.product.id} className="flex gap-4 items-center">
                     <div className="w-16 h-16 rounded-xl bg-white dark:bg-black border border-neutral-100 dark:border-neutral-800 flex items-center justify-center p-2 shrink-0">
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-contain" />
+                      <img src={getProductImage(item)} alt={item.product.name} className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-black dark:text-white truncate">{item.product.name}</h4>

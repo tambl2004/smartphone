@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
+import type { ProductImage } from '@types';
 import { motion, AnimatePresence } from 'motion/react';
 
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
 interface ProductImageGalleryProps {
-  images: string[];
+  images: ProductImage[];
   productName: string;
 }
 
 export const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, productName }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Ensure at least one image
-  const galleryImages = images.length > 0 ? images : ['https://placehold.co/600x600?text=No+Image'];
+  // Sort: primary first, then by sort_order
+  const sorted = [...images].sort((a, b) => (b.isPrimary - a.isPrimary) || (a.sortOrder - b.sortOrder));
+  const galleryImages = sorted.length > 0
+    ? sorted.map((img) => img.imageUrl.startsWith('http') ? img.imageUrl : `${API_URL}${img.imageUrl}`)
+    : ['https://placehold.co/600x600?text=No+Image'];
 
   return (
     <div className="flex flex-col gap-4">

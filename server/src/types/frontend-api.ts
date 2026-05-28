@@ -28,7 +28,7 @@ export type Product = {
   sku: string | null;
   name: string;
   categoryId: number;
-  brandId: number;
+  brand: string;
   price: string;
   originalPrice: string | null;
   discountPercent: number;

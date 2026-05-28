@@ -5,10 +5,21 @@ import toast from 'react-hot-toast';
 import { ChartCard } from '@components/admin/ChartCard';
 import { StatusBadge } from '@components/admin/StatusBadge';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
-import { adminProducts, formatCurrency } from '@data/adminData';
-import type { AdminProduct } from '@data/adminData';
+import { formatPrice } from '@utils/format';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '@services/product.service';
+import type { Product } from '@types';
 
 type ModalType = 'add' | 'edit' | 'view' | 'import' | 'export' | null;
+
+const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+
+const getProductImage = (prod: Product | null): string => {
+  if (!prod) return 'https://placehold.co/200x200?text=No+Image';
+  if (!prod.images || prod.images.length === 0) return 'https://placehold.co/200x200?text=No+Image';
+  const primary = prod.images.find((img) => img.isPrimary) ?? prod.images[0];
+  if (primary.imageUrl.startsWith('http')) return primary.imageUrl;
+  return `${API_URL}${primary.imageUrl}`;
+};
 
 const ModalWrapper: React.FC<{ children: React.ReactNode; maxW?: string; onClose: () => void }> = ({ children, maxW = 'max-w-lg', onClose }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -38,47 +49,136 @@ const InputField: React.FC<{ label: string; value: string; onChange: (v: string)
 export const ProductsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
   const [modalType, setModalType] = useState<ModalType>(null);
-  const [currentProduct, setCurrentProduct] = useState<AdminProduct | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<AdminProduct | null>(null);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
   // Form state for add/edit
-  const [formData, setFormData] = useState({ name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active' as string });
+  const [formData, setFormData] = useState({ 
+    name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active',
+    mainImage: '', image2: '', image3: '', image4: '',
+    spec_screen: '', spec_os: '', spec_chip: '', spec_ram: '', spec_rom: '', spec_cam: '', spec_pin: '',
+    additionalSpecs: [] as { name: string; value: string }[]
+  });
 
   const categories = ['all', 'Điện thoại', 'Máy tính bảng', 'Phụ kiện'];
 
-  const filteredProducts = adminProducts.filter(p => {
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const res = await getProducts({ limit: 100, sortBy: 'id', sortOrder: 'desc' });
+      setProducts(res.items);
+    } catch {
+      toast.error('Lỗi khi tải danh sách sản phẩm');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => fetchProducts(), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredProducts = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCategory = filterCategory === 'all' || p.category === filterCategory;
+    const matchCategory = filterCategory === 'all' || p.categoryName === filterCategory;
     return matchSearch && matchCategory;
   });
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = (id: number) => {
     setSelectedProducts(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
   };
 
   const openAdd = () => {
-    setFormData({ name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active' });
+    setFormData({ 
+      name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active',
+      mainImage: '', image2: '', image3: '', image4: '',
+      spec_screen: '', spec_os: '', spec_chip: '', spec_ram: '', spec_rom: '', spec_cam: '', spec_pin: '',
+      additionalSpecs: [] 
+    });
     setModalType('add');
   };
-  const openEdit = (p: AdminProduct) => {
+
+  const getSpec = (p: Product, name: string) => p.specs?.find(s => s.specName === name)?.specValue || '';
+
+  const openEdit = (p: Product) => {
     setCurrentProduct(p);
-    setFormData({ name: p.name, price: String(p.price), originalPrice: String(p.originalPrice), category: p.category, brand: p.brand, stock: String(p.stock), status: p.status });
+    const mainImage = p.images?.find(i => i.isPrimary)?.imageUrl || p.images?.[0]?.imageUrl || '';
+    const others = p.images?.filter(i => i.imageUrl !== mainImage) || [];
+    
+    const getUrl = (url: string) => url.startsWith('http') ? url : (url ? `${API_URL}${url}` : '');
+
+    setFormData({ 
+      name: p.name, price: String(p.price), originalPrice: String(p.originalPrice || ''), category: p.categoryName, brand: p.brand, stock: String(p.stock), status: p.status,
+      mainImage: getUrl(mainImage), image2: getUrl(others[0]?.imageUrl), image3: getUrl(others[1]?.imageUrl), image4: getUrl(others[2]?.imageUrl),
+      spec_screen: getSpec(p, 'Màn hình'), spec_os: getSpec(p, 'Hệ điều hành'), spec_chip: getSpec(p, 'Chipset'), spec_ram: getSpec(p, 'RAM'), spec_rom: getSpec(p, 'Bộ nhớ trong'), spec_cam: getSpec(p, 'Camera sau'), spec_pin: getSpec(p, 'Pin, Sạc'),
+      additionalSpecs: p.additionalSpecs || []
+    });
     setModalType('edit');
   };
-  const openView = (p: AdminProduct) => { setCurrentProduct(p); setModalType('view'); };
+  const openView = (p: Product) => { setCurrentProduct(p); setModalType('view'); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) { toast.error('Vui lòng nhập tên sản phẩm'); return; }
-    if (modalType === 'add') toast.success('Thêm sản phẩm thành công!');
-    else toast.success('Cập nhật sản phẩm thành công!');
+
+    const cleanUrl = (url: string) => url.startsWith('http') ? url : url.replace(API_URL, '');
+    const images = [];
+    if (formData.mainImage) images.push({ imageUrl: cleanUrl(formData.mainImage), isPrimary: 1, sortOrder: 0 });
+    if (formData.image2) images.push({ imageUrl: cleanUrl(formData.image2), isPrimary: 0, sortOrder: 1 });
+    if (formData.image3) images.push({ imageUrl: cleanUrl(formData.image3), isPrimary: 0, sortOrder: 2 });
+    if (formData.image4) images.push({ imageUrl: cleanUrl(formData.image4), isPrimary: 0, sortOrder: 3 });
+
+    const specs = [];
+    if (formData.spec_screen) specs.push({ specName: 'Màn hình', specValue: formData.spec_screen, sortOrder: 1 });
+    if (formData.spec_os) specs.push({ specName: 'Hệ điều hành', specValue: formData.spec_os, sortOrder: 2 });
+    if (formData.spec_chip) specs.push({ specName: 'Chipset', specValue: formData.spec_chip, sortOrder: 3 });
+    if (formData.spec_ram) specs.push({ specName: 'RAM', specValue: formData.spec_ram, sortOrder: 4 });
+    if (formData.spec_rom) specs.push({ specName: 'Bộ nhớ trong', specValue: formData.spec_rom, sortOrder: 5 });
+    if (formData.spec_cam) specs.push({ specName: 'Camera sau', specValue: formData.spec_cam, sortOrder: 6 });
+    if (formData.spec_pin) specs.push({ specName: 'Pin, Sạc', specValue: formData.spec_pin, sortOrder: 7 });
+
+    const payload = {
+      name: formData.name,
+      price: Number(formData.price),
+      originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+      stock: Number(formData.stock),
+      status: formData.status as 'active' | 'draft' | 'out_of_stock' | 'hidden',
+      categoryId: 1, // hardcode for now
+      brand: 'Apple', // hardcode for now
+      slug: formData.name.toLowerCase().replace(/ /g, '-'),
+      images,
+      specs,
+      additionalSpecs: formData.additionalSpecs
+    };
+
+    if (modalType === 'add') {
+      const res = await createProduct(payload);
+      if (res.ok) toast.success('Thêm sản phẩm thành công!');
+      else toast.error(res.message || 'Lỗi thêm sản phẩm');
+    } else if (currentProduct) {
+      const res = await updateProduct(currentProduct.id, payload);
+      if (res.ok) toast.success('Cập nhật sản phẩm thành công!');
+      else toast.error(res.message || 'Lỗi cập nhật');
+    }
     setModalType(null);
     setCurrentProduct(null);
+    fetchProducts();
   };
 
-  const handleDelete = () => {
-    toast.success(`Đã xóa sản phẩm "${deleteTarget?.name}"!`);
+  const handleDelete = async () => {
+    if (deleteTarget) {
+      const res = await deleteProduct(deleteTarget.id);
+      if (res.ok) {
+        toast.success(`Đã xóa sản phẩm "${deleteTarget.name}"!`);
+        fetchProducts();
+      } else {
+        toast.error(res.message || 'Lỗi xóa sản phẩm');
+      }
+    }
     setDeleteTarget(null);
   };
 
@@ -99,7 +199,7 @@ export const ProductsPage: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Quản lý sản phẩm</h1>
-          <p className="text-sm opacity-40 mt-1">{adminProducts.length} sản phẩm</p>
+          <p className="text-sm opacity-40 mt-1">{loading ? 'Đang tải...' : `${products.length} sản phẩm`}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setModalType('import')} className="h-9 px-3 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all outline-none">
@@ -153,18 +253,20 @@ export const ProductsPage: React.FC = () => {
                   <td className="py-3 pr-3"><input type="checkbox" checked={selectedProducts.includes(product.id)} onChange={() => toggleSelect(product.id)} className="w-4 h-4 rounded accent-indigo-600" /></td>
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-3">
-                      <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                      <img src={getProductImage(product)} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
                       <div><p className="text-sm font-medium opacity-80">{product.name}</p><p className="text-xs opacity-30">{product.brand}</p></div>
                     </div>
                   </td>
                   <td className="py-3 pr-4">
-                    <p className="text-sm font-medium opacity-80">{formatCurrency(product.price)}</p>
-                    <p className="text-xs opacity-30 line-through">{formatCurrency(product.originalPrice)}</p>
+                    <p className="text-sm font-medium opacity-80">{formatPrice(product.price)}</p>
+                    {product.originalPrice && (
+                      <p className="text-xs opacity-30 line-through">{formatPrice(product.originalPrice)}</p>
+                    )}
                   </td>
                   <td className="py-3 pr-4"><span className={`text-sm font-medium ${product.stock <= 10 ? 'text-red-400' : 'opacity-70'}`}>{product.stock}</span></td>
-                  <td className="py-3 pr-4"><span className="text-sm opacity-50">{product.sold}</span></td>
+                  <td className="py-3 pr-4"><span className="text-sm opacity-50">0</span></td>
                   <td className="py-3 pr-4"><div className="flex items-center gap-1"><Star size={12} className="text-amber-400 fill-amber-400" /><span className="text-sm opacity-60">{product.rating}</span></div></td>
-                  <td className="py-3 pr-4"><StatusBadge status={product.status} /></td>
+                  <td className="py-3 pr-4"><StatusBadge status={product.status === 'out_of_stock' ? 'outOfStock' : product.status} /></td>
                   <td className="py-3">
                     <div className="flex items-center gap-1 transition-opacity">
                       <button onClick={() => openView(product)} className="w-7 h-7 rounded-md flex items-center justify-center opacity-40 hover:opacity-100 hover:bg-white/[0.08] transition-all border-none outline-none"><Eye size={14} /></button>
@@ -185,40 +287,118 @@ export const ProductsPage: React.FC = () => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {(modalType === 'add' || modalType === 'edit') && (
-          <ModalWrapper onClose={() => setModalType(null)}>
+          <ModalWrapper maxW="max-w-3xl" onClose={() => setModalType(null)}>
             <ModalHeader title={modalType === 'add' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'} onClose={() => setModalType(null)} />
-            <div className="p-5 space-y-4">
-              <InputField label="Tên sản phẩm" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="VD: iPhone 16 Pro Max 256GB" />
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Giá bán (₫)" value={formData.price} onChange={v => setFormData({...formData, price: v})} type="number" placeholder="29990000" />
-                <InputField label="Giá gốc (₫)" value={formData.originalPrice} onChange={v => setFormData({...formData, originalPrice: v})} type="number" placeholder="34990000" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-white/40 mb-1.5">Danh mục</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
-                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
-                    <option value="Điện thoại">Điện thoại</option>
-                    <option value="Máy tính bảng">Máy tính bảng</option>
-                    <option value="Phụ kiện">Phụ kiện</option>
-                  </select>
+            <div className="p-5 space-y-6">
+              
+              {/* Thông tin cơ bản */}
+              <div>
+                <h4 className="text-sm font-semibold text-white/80 mb-3 uppercase tracking-wider">Thông tin cơ bản</h4>
+                <div className="space-y-4">
+                  <InputField label="Tên sản phẩm" value={formData.name} onChange={v => setFormData({...formData, name: v})} placeholder="VD: iPhone 16 Pro Max 256GB" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <InputField label="Giá bán (₫)" value={formData.price} onChange={v => setFormData({...formData, price: v})} type="number" placeholder="29990000" />
+                    <InputField label="Giá gốc (₫)" value={formData.originalPrice} onChange={v => setFormData({...formData, originalPrice: v})} type="number" placeholder="34990000" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-white/40 mb-1.5">Danh mục</label>
+                      <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
+                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
+                        <option value="Điện thoại">Điện thoại</option>
+                        <option value="Máy tính bảng">Máy tính bảng</option>
+                        <option value="Phụ kiện">Phụ kiện</option>
+                      </select>
+                    </div>
+                    <InputField label="Thương hiệu" value={formData.brand} onChange={v => setFormData({...formData, brand: v})} placeholder="VD: Apple" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <InputField label="Số lượng kho" value={formData.stock} onChange={v => setFormData({...formData, stock: v})} type="number" placeholder="50" />
+                    <div>
+                      <label className="block text-xs font-medium text-white/40 mb-1.5">Trạng thái</label>
+                      <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
+                        className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
+                        <option value="active">Đang bán</option>
+                        <option value="draft">Nháp</option>
+                        <option value="outOfStock">Hết hàng</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <InputField label="Thương hiệu" value={formData.brand} onChange={v => setFormData({...formData, brand: v})} placeholder="VD: Apple" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <InputField label="Số lượng kho" value={formData.stock} onChange={v => setFormData({...formData, stock: v})} type="number" placeholder="50" />
-                <div>
-                  <label className="block text-xs font-medium text-white/40 mb-1.5">Trạng thái</label>
-                  <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50 transition-all appearance-none">
-                    <option value="active">Đang bán</option>
-                    <option value="draft">Nháp</option>
-                    <option value="outOfStock">Hết hàng</option>
-                  </select>
+
+              {/* Hình ảnh */}
+              <div className="pt-4 border-t border-white/[0.06]">
+                <h4 className="text-sm font-semibold text-white/80 mb-3 uppercase tracking-wider">Hình ảnh</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Ảnh chính (URL)" value={formData.mainImage} onChange={v => setFormData({...formData, mainImage: v})} placeholder="/images/main.png" />
+                  <InputField label="Ảnh phụ 1 (URL)" value={formData.image2} onChange={v => setFormData({...formData, image2: v})} placeholder="/images/2.png" />
+                  <InputField label="Ảnh phụ 2 (URL)" value={formData.image3} onChange={v => setFormData({...formData, image3: v})} placeholder="/images/3.png" />
+                  <InputField label="Ảnh phụ 3 (URL)" value={formData.image4} onChange={v => setFormData({...formData, image4: v})} placeholder="/images/4.png" />
+                </div>
+                <div className="flex gap-4 mt-4">
+                  {[formData.mainImage, formData.image2, formData.image3, formData.image4].map((url, i) => (
+                    <div key={i} className="w-20 h-20 rounded-lg bg-white/[0.04] border border-white/[0.08] overflow-hidden flex items-center justify-center shrink-0">
+                      {url ? (
+                        <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.src = 'https://placehold.co/200x200?text=Error')} />
+                      ) : (
+                        <span className="text-[10px] text-white/30 uppercase">Trống</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* Thông số kỹ thuật cơ bản */}
+              <div className="pt-4 border-t border-white/[0.06]">
+                <h4 className="text-sm font-semibold text-white/80 mb-3 uppercase tracking-wider">Thông số cơ bản</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <InputField label="Màn hình" value={formData.spec_screen} onChange={v => setFormData({...formData, spec_screen: v})} placeholder="6.7 inch, OLED" />
+                  <InputField label="Hệ điều hành" value={formData.spec_os} onChange={v => setFormData({...formData, spec_os: v})} placeholder="iOS 17" />
+                  <InputField label="Chipset" value={formData.spec_chip} onChange={v => setFormData({...formData, spec_chip: v})} placeholder="Apple A17 Pro" />
+                  <InputField label="RAM" value={formData.spec_ram} onChange={v => setFormData({...formData, spec_ram: v})} placeholder="8 GB" />
+                  <InputField label="Bộ nhớ trong" value={formData.spec_rom} onChange={v => setFormData({...formData, spec_rom: v})} placeholder="256 GB" />
+                  <InputField label="Camera sau" value={formData.spec_cam} onChange={v => setFormData({...formData, spec_cam: v})} placeholder="48 MP" />
+                  <InputField label="Pin, Sạc" value={formData.spec_pin} onChange={v => setFormData({...formData, spec_pin: v})} placeholder="4441 mAh, 20 W" />
+                </div>
+              </div>
+
+              {/* Thông số bổ sung (To-do list style) */}
+              <div className="pt-4 border-t border-white/[0.06]">
+                <h4 className="text-sm font-semibold text-white/80 mb-3 uppercase tracking-wider">Thông số bổ sung</h4>
+                <div className="space-y-3">
+                  {formData.additionalSpecs.map((spec, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="flex-1 grid grid-cols-2 gap-3">
+                        <input type="text" value={spec.name} onChange={e => {
+                          const newSpecs = [...formData.additionalSpecs];
+                          newSpecs[i].name = e.target.value;
+                          setFormData({...formData, additionalSpecs: newSpecs});
+                        }} placeholder="Tên thông số (VD: Camera trước)" className="h-9 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50" />
+                        <input type="text" value={spec.value} onChange={e => {
+                          const newSpecs = [...formData.additionalSpecs];
+                          newSpecs[i].value = e.target.value;
+                          setFormData({...formData, additionalSpecs: newSpecs});
+                        }} placeholder="Giá trị (VD: 12 MP)" className="h-9 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50" />
+                      </div>
+                      <button onClick={() => {
+                        const newSpecs = formData.additionalSpecs.filter((_, idx) => idx !== i);
+                        setFormData({...formData, additionalSpecs: newSpecs});
+                      }} className="w-9 h-9 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center transition-all outline-none">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button onClick={() => {
+                    setFormData({...formData, additionalSpecs: [...formData.additionalSpecs, { name: '', value: '' }]});
+                  }} className="h-9 px-4 rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-white/70 hover:text-white hover:bg-white/[0.1] transition-all outline-none flex items-center gap-2">
+                    <Plus size={14} /> Thêm thông số
+                  </button>
+                </div>
+              </div>
+
             </div>
-            <div className="flex gap-3 px-5 pb-5">
+            <div className="flex gap-3 px-5 pb-5 pt-4 border-t border-white/[0.06]">
               <button onClick={() => setModalType(null)} className="flex-1 h-10 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/70 hover:text-white hover:bg-white/[0.1] transition-all outline-none">Hủy</button>
               <button onClick={handleSave} className="flex-1 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm text-white font-medium transition-all outline-none border-none flex items-center justify-center gap-2">
                 <Save size={14} /> {modalType === 'add' ? 'Thêm' : 'Lưu thay đổi'}
@@ -231,31 +411,73 @@ export const ProductsPage: React.FC = () => {
       {/* View Modal */}
       <AnimatePresence>
         {modalType === 'view' && currentProduct && (
-          <ModalWrapper onClose={() => setModalType(null)}>
+          <ModalWrapper maxW="max-w-4xl" onClose={() => setModalType(null)}>
             <ModalHeader title="Chi tiết sản phẩm" onClose={() => setModalType(null)} />
-            <div className="p-5 space-y-4">
-              <div className="flex gap-4">
-                <img src={currentProduct.image} alt="" className="w-24 h-24 rounded-xl object-cover" />
-                <div className="flex-1">
-                  <h4 className="text-base font-semibold text-white">{currentProduct.name}</h4>
-                  <p className="text-xs text-white/40 mt-1">{currentProduct.brand} • {currentProduct.category}</p>
-                  <div className="mt-2"><StatusBadge status={currentProduct.status} /></div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column: Images */}
+              <div className="space-y-4">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white/[0.02] border border-white/[0.05]">
+                  <img src={getProductImage(currentProduct)} alt={currentProduct.name} className="w-full h-full object-cover" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Giá bán', value: formatCurrency(currentProduct.price) },
-                  { label: 'Giá gốc', value: formatCurrency(currentProduct.originalPrice) },
-                  { label: 'Tồn kho', value: `${currentProduct.stock} sản phẩm` },
-                  { label: 'Đã bán', value: `${currentProduct.sold} sản phẩm` },
-                  { label: 'Đánh giá', value: `${currentProduct.rating} ★` },
-                  { label: 'Ngày tạo', value: new Date(currentProduct.createdAt).toLocaleDateString('vi-VN') },
-                ].map(item => (
-                  <div key={item.label} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                    <p className="text-[10px] text-white/30 uppercase tracking-wider">{item.label}</p>
-                    <p className="text-sm text-white/80 font-medium mt-1">{item.value}</p>
+                {currentProduct.images && currentProduct.images.length > 1 && (
+                  <div className="grid grid-cols-3 gap-3">
+                    {currentProduct.images.filter(img => !img.isPrimary).slice(0, 3).map((img, i) => (
+                      <div key={i} className={`aspect-square rounded-xl overflow-hidden border border-white/[0.05] bg-white/[0.02]`}>
+                        <img src={img.imageUrl.startsWith('http') ? img.imageUrl : `${API_URL}${img.imageUrl}`} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+              </div>
+
+              {/* Right Column: Info & Specs */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-xl font-bold text-white leading-tight">{currentProduct.name}</h4>
+                  <div className="flex items-center gap-3 mt-2">
+                    <p className="text-sm text-indigo-400 font-medium">{currentProduct.brand}</p>
+                    <span className="text-white/20">•</span>
+                    <p className="text-sm text-white/50">{currentProduct.categoryName}</p>
+                    <span className="text-white/20">•</span>
+                    <StatusBadge status={currentProduct.status === 'out_of_stock' ? 'outOfStock' : currentProduct.status} />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Giá bán', value: formatPrice(currentProduct.price), highlight: true },
+                    { label: 'Giá gốc', value: currentProduct.originalPrice ? formatPrice(currentProduct.originalPrice) : 'Không có' },
+                    { label: 'Tồn kho', value: `${currentProduct.stock} sản phẩm` },
+                    { label: 'Đã bán', value: `0 sản phẩm` },
+                    { label: 'Đánh giá', value: `${currentProduct.rating} ★` },
+                    { label: 'Ngày tạo', value: currentProduct.createdAt ? new Date(currentProduct.createdAt).toLocaleDateString('vi-VN') : '-' },
+                  ].map(item => (
+                    <div key={item.label} className={`p-3.5 rounded-xl border ${item.highlight ? 'bg-indigo-500/[0.05] border-indigo-500/20' : 'bg-white/[0.02] border-white/[0.04]'}`}>
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider">{item.label}</p>
+                      <p className={`text-base font-semibold mt-1 ${item.highlight ? 'text-indigo-400' : 'text-white/90'}`}>{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {((currentProduct.specs && currentProduct.specs.length > 0) || (currentProduct.additionalSpecs && currentProduct.additionalSpecs.length > 0)) && (
+                  <div className="pt-6 border-t border-white/[0.06]">
+                    <h5 className="text-sm font-semibold text-white/80 mb-4 uppercase tracking-wider">Thông số kỹ thuật chi tiết</h5>
+                    <div className="space-y-2">
+                      {currentProduct.specs?.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                          <span className="text-xs font-medium text-white/50 w-1/3">{s.specName}</span>
+                          <span className="text-sm text-white/90 w-2/3 text-right">{s.specValue}</span>
+                        </div>
+                      ))}
+                      {currentProduct.additionalSpecs?.map((s, i) => (
+                        <div key={`add-${i}`} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                          <span className="text-xs font-medium text-white/50 w-1/3">{s.name}</span>
+                          <span className="text-sm text-white/90 w-2/3 text-right">{s.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </ModalWrapper>
@@ -305,7 +527,7 @@ export const ProductsPage: React.FC = () => {
                 </div>
               ))}
               <div className="p-3 rounded-lg bg-white/[0.02]">
-                <p className="text-xs text-white/40">Sẽ xuất <span className="text-white/70 font-medium">{adminProducts.length} sản phẩm</span> theo bộ lọc hiện tại.</p>
+                <p className="text-xs text-white/40">Sẽ xuất <span className="text-white/70 font-medium">{products.length} sản phẩm</span> theo bộ lọc hiện tại.</p>
               </div>
             </div>
             <div className="flex gap-3 px-5 pb-5">

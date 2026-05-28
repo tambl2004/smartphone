@@ -4,7 +4,7 @@ export const productCreateRules = [
   { field: 'slug', required: true, type: 'string' },
   { field: 'name', required: true, type: 'string' },
   { field: 'categoryId', required: true, type: 'integer' },
-  { field: 'brandId', required: true, type: 'integer' },
+  { field: 'brand', required: true, type: 'string' },
   { field: 'price', required: true, type: 'number' },
   { field: 'originalPrice', required: false, type: 'number', nullable: true },
   { field: 'discountPercent', required: false, type: 'integer' },

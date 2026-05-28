@@ -52,16 +52,7 @@ CREATE TABLE IF NOT EXISTS categories (
     UNIQUE KEY uk_categories_slug (slug)
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS brands (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    slug VARCHAR(100) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    logo_url VARCHAR(500) NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_brands_slug (slug)
-) ENGINE=InnoDB;
+
 
 CREATE TABLE IF NOT EXISTS products (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -69,7 +60,7 @@ CREATE TABLE IF NOT EXISTS products (
     sku VARCHAR(100) NULL,
     name VARCHAR(255) NOT NULL,
     category_id BIGINT UNSIGNED NOT NULL,
-    brand_id BIGINT UNSIGNED NOT NULL,
+    brand VARCHAR(100) NOT NULL,
     price DECIMAL(15,0) NOT NULL,
     original_price DECIMAL(15,0) NULL,
     discount_percent INT NOT NULL DEFAULT 0,
@@ -77,6 +68,7 @@ CREATE TABLE IF NOT EXISTS products (
     reviews_count INT NOT NULL DEFAULT 0,
     stock INT NOT NULL DEFAULT 0,
     description TEXT NULL,
+    additional_specs JSON NULL,
     featured TINYINT(1) NOT NULL DEFAULT 0,
     status ENUM('active', 'draft', 'out_of_stock', 'hidden') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -85,10 +77,9 @@ CREATE TABLE IF NOT EXISTS products (
     UNIQUE KEY uk_products_slug (slug),
     UNIQUE KEY uk_products_sku (sku),
     KEY idx_products_category (category_id),
-    KEY idx_products_brand (brand_id),
+    KEY idx_products_brand (brand),
     KEY idx_products_featured (featured),
-    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_products_brand FOREIGN KEY (brand_id) REFERENCES brands(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS product_images (
@@ -243,26 +234,16 @@ CREATE TABLE IF NOT EXISTS carts (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id BIGINT UNSIGNED NULL,
     session_id VARCHAR(100) NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_carts_user (user_id),
-    UNIQUE KEY uk_carts_session (session_id),
-    CONSTRAINT fk_carts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS cart_items (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    cart_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_cart_items_cart_product (cart_id, product_id),
-    KEY idx_cart_items_product (product_id),
-    CONSTRAINT fk_cart_items_cart FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_cart_items_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE
+    KEY idx_carts_user (user_id),
+    KEY idx_carts_session (session_id),
+    UNIQUE KEY uk_carts_user_session_product (user_id, session_id, product_id),
+    CONSTRAINT fk_carts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_carts_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS faqs (
@@ -275,6 +256,8 @@ CREATE TABLE IF NOT EXISTS faqs (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
+
+
 
 CREATE TABLE IF NOT EXISTS stores (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

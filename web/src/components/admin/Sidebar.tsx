@@ -11,7 +11,7 @@ import {
   Image as ImageIcon,
   Tag,
   Layers,
-  Award
+  HelpCircle
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
@@ -28,7 +28,8 @@ const menuItems = [
   { icon: ImageIcon, label: 'Banner', path: '/admin/content/banners' },
   { icon: Tag, label: 'Khuyến mãi', path: '/admin/content/promotions' },
   { icon: Layers, label: 'Danh mục', path: '/admin/content/categories' },
-  { icon: Award, label: 'Thương hiệu', path: '/admin/content/brands' },
+  { icon: HelpCircle, label: 'Câu hỏi (FAQ)', path: '/admin/content/faqs' },
+
   { icon: BarChart3, label: 'Báo cáo', path: '/admin/reports' },
 ];
 

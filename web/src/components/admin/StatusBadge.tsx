@@ -2,7 +2,7 @@ import React from 'react';
 import type { OrderStatus } from '@data/adminData';
 
 interface StatusBadgeProps {
-  status: OrderStatus | 'active' | 'blocked' | 'draft' | 'outOfStock' | 'critical' | 'warning';
+  status: OrderStatus | 'active' | 'blocked' | 'draft' | 'outOfStock' | 'critical' | 'warning' | 'hidden' | 'out_of_stock';
 }
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
@@ -15,6 +15,8 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   blocked: { label: 'Đã khóa', bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
   draft: { label: 'Nháp', bg: 'bg-neutral-500/10', text: 'text-neutral-400', dot: 'bg-neutral-400' },
   outOfStock: { label: 'Hết hàng', bg: 'bg-orange-500/10', text: 'text-orange-400', dot: 'bg-orange-400' },
+  out_of_stock: { label: 'Hết hàng', bg: 'bg-orange-500/10', text: 'text-orange-400', dot: 'bg-orange-400' },
+  hidden: { label: 'Đã ẩn', bg: 'bg-neutral-500/10', text: 'text-neutral-400', dot: 'bg-neutral-400' },
   critical: { label: 'Nguy hiểm', bg: 'bg-red-500/10', text: 'text-red-400', dot: 'bg-red-400' },
   warning: { label: 'Cảnh báo', bg: 'bg-amber-500/10', text: 'text-amber-400', dot: 'bg-amber-400' },
 };

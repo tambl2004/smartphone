@@ -26,13 +26,14 @@ export const ProfilePage: React.FC = () => {
   const [showPwd, setShowPwd] = useState({ current: false, new: false, confirm: false });
 
   useEffect(() => {
-    if (!auth) {
+    const currentAuth = getAuth();
+    if (!currentAuth) {
       navigate('/login');
     } else {
       setTimeout(() => {
-        setFullName(auth.user.fullName);
-        setPhone(auth.user.phone || '');
-        setDateOfBirth(auth.user.dateOfBirth ? new Date(auth.user.dateOfBirth).toISOString().split('T')[0] : '');
+        setFullName(currentAuth.user.fullName);
+        setPhone(currentAuth.user.phone || '');
+        setDateOfBirth(currentAuth.user.dateOfBirth ? new Date(currentAuth.user.dateOfBirth).toISOString().split('T')[0] : '');
         
         void getMyAddresses().then(res => {
           if (res.ok && res.data) {
@@ -42,7 +43,8 @@ export const ProfilePage: React.FC = () => {
         });
       }, 0);
     }
-  }, [auth, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   if (!auth) return null;
 
