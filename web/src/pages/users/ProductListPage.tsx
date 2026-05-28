@@ -22,18 +22,18 @@ export const ProductListPage: React.FC = () => {
   const [sort, setSort] = useState('featured');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  useEffect(() => {
+  // Update state during render when path changes to avoid effect chains
+  const prevPathRef = React.useRef(path);
+  if (prevPathRef.current !== path) {
+    prevPathRef.current = path;
     const params = new URLSearchParams(window.location.search);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCategory(params.get('category') || undefined);
     const searchVal = params.get('search');
     if (searchVal) {
-       
       setBrand(undefined);
-       
       setPriceRange({ min: 0, max: 100000000 });
     }
-  }, [path]);
+  }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

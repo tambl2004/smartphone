@@ -23,14 +23,14 @@ export type AuthState = {
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
 export const saveAuth = (data: AuthState) => {
-  localStorage.setItem('auth_token', data.token);
-  localStorage.setItem('auth_user', JSON.stringify(data.user));
+  localStorage.setItem('auth_token:v1', data.token);
+  localStorage.setItem('auth_user:v1', JSON.stringify(data.user));
   window.dispatchEvent(new Event('storage')); // trigger update
 };
 
 export const getAuth = (): AuthState | null => {
-  const token = localStorage.getItem('auth_token');
-  const userRaw = localStorage.getItem('auth_user');
+  const token = localStorage.getItem('auth_token:v1');
+  const userRaw = localStorage.getItem('auth_user:v1');
   if (!token || !userRaw) return null;
   try {
     return { token, user: JSON.parse(userRaw) as AuthUser };
@@ -40,8 +40,8 @@ export const getAuth = (): AuthState | null => {
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('auth_user');
+  localStorage.removeItem('auth_token:v1');
+  localStorage.removeItem('auth_user:v1');
   window.dispatchEvent(new Event('storage'));
 };
 

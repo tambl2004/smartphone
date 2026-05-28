@@ -13,14 +13,16 @@ export const CartPage: React.FC = () => {
 
   // Khởi tạo: mặc định chọn tất cả sản phẩm
   useEffect(() => {
-    if (items.length > 0 && selectedIds.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedIds(items.map(item => item.product.id));
-    } else {
-       
-      setSelectedIds(prev => prev.filter(id => items.some(item => item.product.id === id)));
+    if (items.length === 0) {
+      setSelectedIds([]);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setSelectedIds(prev => {
+      if (prev.length === 0) {
+        return items.map(item => item.product.id);
+      }
+      return prev.filter(id => items.some(item => item.product.id === id));
+    });
   }, [items]);
 
   const selectedItems = items.filter(item => selectedIds.includes(item.product.id));

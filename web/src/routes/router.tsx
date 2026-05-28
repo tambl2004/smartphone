@@ -39,8 +39,10 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     window.dispatchEvent(new Event('navigate'));
   };
 
+  const contextValue = React.useMemo(() => ({ path, navigate }), [path]);
+
   return (
-    <RouterContext.Provider value={{ path, navigate }}>
+    <RouterContext.Provider value={contextValue}>
       {children}
     </RouterContext.Provider>
   );
@@ -55,14 +57,14 @@ export const Link: React.FC<{
 }> = ({ to, children, className, style, onClick }) => {
   const { navigate } = useRouter();
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleNavigation = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onClick) onClick(e);
     navigate(to);
   };
 
   return (
-    <a href={to} onClick={handleClick} className={className} style={style}>
+    <a href={to} onClick={handleNavigation} className={className} style={style}>
       {children}
     </a>
   );

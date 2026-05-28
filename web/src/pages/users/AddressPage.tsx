@@ -39,10 +39,9 @@ export const AddressPage: React.FC = () => {
   };
 
   useEffect(() => {
-    setTimeout(() => {
-      void fetchAddresses();
-      void getProvinces().then(setProvinces);
-    }, 0);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAddresses();
+    void getProvinces().then(setProvinces);
   }, []);
 
   // Cascading Location Logic

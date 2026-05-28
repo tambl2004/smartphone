@@ -16,7 +16,7 @@ export const ForgotPasswordPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [step, setStep] = useState<Step>('email');
     const [focusedField, setFocusedField] = useState<string | null>(null);
-    const [verifiedOtp, setVerifiedOtp] = useState('');
+    const verifiedOtpRef = React.useRef('');
 
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,7 +55,7 @@ export const ForgotPasswordPage: React.FC = () => {
         const result = await authVerifyForgot(email, code);
         setIsLoading(false);
         if (!result.ok) { toast.error(result.message ?? 'Mã OTP không đúng hoặc đã hết hạn'); return; }
-        setVerifiedOtp(code);
+        verifiedOtpRef.current = code;
         setStep('reset');
     };
 
@@ -65,7 +65,7 @@ export const ForgotPasswordPage: React.FC = () => {
         if (newPassword !== confirmPassword) { toast.error('Mật khẩu xác nhận không khớp'); return; }
         if (newPassword.length < 8) { toast.error('Mật khẩu phải có ít nhất 8 ký tự'); return; }
         setIsLoading(true);
-        const result = await authResetPassword(email, verifiedOtp, newPassword);
+        const result = await authResetPassword(email, verifiedOtpRef.current, newPassword);
         setIsLoading(false);
         if (!result.ok) { toast.error(result.message ?? 'Đặt lại mật khẩu thất bại'); return; }
         toast.success('Đặt lại mật khẩu thành công!');
@@ -199,7 +199,6 @@ export const ForgotPasswordPage: React.FC = () => {
                                             placeholder="Email của bạn"
                                             className="w-full h-13 pl-12 pr-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                                             autoComplete="email"
-                                            autoFocus
                                         />
                                     </div>
 

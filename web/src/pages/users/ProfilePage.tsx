@@ -42,7 +42,7 @@ export const ProfilePage: React.FC = () => {
         });
       }, 0);
     }
-  }, [auth?.user.id, navigate]);
+  }, [auth, navigate]);
 
   if (!auth) return null;
 
@@ -178,7 +178,7 @@ export const ProfilePage: React.FC = () => {
                     <div className="relative">
                       <label className="absolute -top-2.5 left-3 bg-white dark:bg-neutral-900 px-1 text-xs text-neutral-500 font-medium z-10">Email</label>
                       <input 
-                        value={auth.user.email} disabled
+                        value={auth.user.email} disabled readOnly
                         className="w-full px-5 py-4 bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 rounded-2xl text-sm outline-none text-neutral-500 cursor-not-allowed"
                       />
                       <span className="absolute right-4 top-4 text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-bold uppercase">Đã xác minh</span>

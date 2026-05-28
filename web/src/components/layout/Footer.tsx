@@ -36,7 +36,7 @@ export const Footer = () => {
           </div>
         </div>
         <div className="mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-900 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-medium text-neutral-500">
-          <div>&copy; {new Date().getFullYear()} NEXPHONE. Bản quyền đã được bảo lưu.</div>
+          <div suppressHydrationWarning>&copy; {new Date().getFullYear()} NEXPHONE. Bản quyền đã được bảo lưu.</div>
           <div className="flex gap-4">
             <a href="#" className="hover:text-black dark:hover:text-white transition-colors">Twitter</a>
             <a href="#" className="hover:text-black dark:hover:text-white transition-colors">Instagram</a>

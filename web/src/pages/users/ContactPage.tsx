@@ -179,6 +179,8 @@ export const ContactPage: React.FC = () => {
             {/* Map */}
             <div className="mt-6 rounded-2xl overflow-hidden h-64 md:h-[350px] bg-neutral-100 dark:bg-neutral-900 w-full relative">
               <iframe
+                title="Bản đồ hệ thống cửa hàng"
+                sandbox="allow-scripts allow-same-origin allow-popups"
                 src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2345.425871701574!2d105.81071997383769!3d21.067404516657728!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1779723035573!5m2!1svi!2s"
                 className="absolute inset-0 w-full h-full"
                 style={{ border: 0 }}
