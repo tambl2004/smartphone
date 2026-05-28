@@ -4,7 +4,6 @@ import { getProducts, type ProductListMeta } from '@services/product.service';
 import { ProductFilter } from '@/components/users/product/ProductFilter';
 import { ProductSort } from '@/components/users/product/ProductSort';
 import { ProductList } from '@/components/users/product/ProductList';
-import { ProductQuickView } from '@/components/users/product/ProductQuickView';
 import { useRouter } from '@routes/router';
 import { motion } from 'motion/react';
 
@@ -24,7 +23,6 @@ export const ProductListPage: React.FC = () => {
   const [brand, setBrand] = useState<string | undefined>(undefined);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000000 });
   const [sort, setSort] = useState('featured');
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -129,7 +127,6 @@ export const ProductListPage: React.FC = () => {
                 <ProductList
                   products={products}
                   isLoading={isLoading}
-                  onQuickView={(p) => setQuickViewProduct(p)}
                 />
               </div>
             </motion.div>
@@ -137,11 +134,6 @@ export const ProductListPage: React.FC = () => {
         </div>
       </div>
 
-      <ProductQuickView
-        product={quickViewProduct}
-        isOpen={quickViewProduct !== null}
-        onClose={() => setQuickViewProduct(null)}
-      />
     </div>
   );
 };

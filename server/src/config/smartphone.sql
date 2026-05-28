@@ -232,16 +232,14 @@ CREATE TABLE IF NOT EXISTS wishlists (
 
 CREATE TABLE IF NOT EXISTS carts (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    user_id BIGINT UNSIGNED NULL,
-    session_id VARCHAR(100) NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_carts_user (user_id),
-    KEY idx_carts_session (session_id),
-    UNIQUE KEY uk_carts_user_session_product (user_id, session_id, product_id),
+    UNIQUE KEY uk_carts_user_product (user_id, product_id),
     CONSTRAINT fk_carts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_carts_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;

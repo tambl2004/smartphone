@@ -5,8 +5,8 @@ import { Button } from '@components/common/Button';
 import { formatPrice } from '@utils/format';
 import { useCart } from '@hooks/useCart';
 import { useWishlist } from '@hooks/useWishlist';
-import { Link, useRouter } from '@routes/router';
-import { Heart, Eye, ShoppingCart, Star } from 'lucide-react';
+import { Link } from '@routes/router';
+import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
@@ -20,11 +20,9 @@ const getPrimaryImage = (product: Product): string => {
 
 interface ProductCardProps {
   product: Product;
-  onQuickView?: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
-  const { navigate } = useRouter();
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const isWish = isInWishlist(product.id);
@@ -84,7 +82,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
             <Button
               variant="secondary"
               className="flex-none px-0 w-11"
-              onClick={() => onQuickView ? onQuickView(product) : navigate(`/product/${product.id}`)}
+              onClick={() => window.location.assign(`/product/${product.id}`)}
             >
               <Eye size={18} />
             </Button>

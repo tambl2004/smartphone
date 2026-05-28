@@ -20,7 +20,7 @@ router.use('/locations', locationRoutes);
 router.use('/addresses', authenticate, addressRoutes);
 router.use('/profile', authenticate, profileRoutes);
 router.use('/users', authenticate, authorizeRoles('admin'), userRoutes);
-router.use('/customers', authenticate, authorizeRoles('admin'), customerRoutes);
+router.use('/customers', authenticate, customerRoutes);
 router.use('/orders', authenticate, authorizeRoles('admin'), orderRoutes);
 router.use('/dashboard', authenticate, authorizeRoles('admin'), dashboardRoutes);
 

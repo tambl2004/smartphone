@@ -17,8 +17,12 @@ const getProductImage = (prod: Product): string => {
 };
 
 export const WishlistPage: React.FC = () => {
-  const { items, toggleWishlist } = useWishlist();
+  const { items, toggleWishlist, syncFromServer } = useWishlist();
   const { addToCart } = useCart();
+
+  React.useEffect(() => {
+    void syncFromServer();
+  }, [syncFromServer]);
 
   if (items.length === 0) {
     return (

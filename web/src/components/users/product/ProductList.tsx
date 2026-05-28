@@ -7,13 +7,11 @@ import { motion } from 'motion/react';
 interface ProductListProps {
   products: Product[];
   isLoading: boolean;
-  onQuickView?: (product: Product) => void;
 }
 
 export const ProductList: React.FC<ProductListProps> = ({
   products,
   isLoading,
-  onQuickView
 }) => {
   if (isLoading) {
     return (
@@ -49,7 +47,7 @@ export const ProductList: React.FC<ProductListProps> = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
         >
-          <ProductCard product={product} onQuickView={onQuickView} />
+          <ProductCard product={product} />
         </motion.div>
       ))}
     </div>

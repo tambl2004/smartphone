@@ -5,6 +5,7 @@ import { Link, useRouter } from '@routes/router';
 import { CartItem } from '@types';
 import { ShoppingCart, Trash2, ArrowLeft, Plus, Minus, CreditCard, Check } from 'lucide-react';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 
 const API_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
 
@@ -16,11 +17,15 @@ const getProductImage = (item: CartItem): string => {
 };
 
 export const CartPage: React.FC = () => {
-  const { items, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { items, removeFromCart, updateQuantity, clearCart, syncFromServer } = useCart();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { navigate } = useRouter();
 
-  // Khởi tạo: mặc định chọn tất cả sản phẩm
+  useEffect(() => {
+    void syncFromServer();
+  }, [syncFromServer]);
+
+  // Khởi tạo: mặc định chọn tất cả sản phẩm (trừ sản phẩm hết hàng)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (items.length === 0) {
@@ -29,9 +34,9 @@ export const CartPage: React.FC = () => {
       }
       setSelectedIds(prev => {
         if (prev.length === 0) {
-          return items.map(item => item.product.id);
+          return items.filter(item => item.product.stock > 0).map(item => item.product.id);
         }
-        return prev.filter(id => items.some(item => item.product.id === id));
+        return prev.filter(id => items.some(item => item.product.id === id && item.product.stock > 0));
       });
     }, 0);
     return () => clearTimeout(timer);
@@ -39,11 +44,13 @@ export const CartPage: React.FC = () => {
 
   const selectedItems = items.filter(item => selectedIds.includes(item.product.id));
   const selectedTotal = selectedItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-  const isAllSelected = items.length > 0 && selectedIds.length === items.length;
+  
+  const inStockItems = items.filter(item => item.product.stock > 0);
+  const isAllSelected = inStockItems.length > 0 && selectedIds.length === inStockItems.length;
 
   const toggleSelectAll = () => {
     if (isAllSelected) setSelectedIds([]);
-    else setSelectedIds(items.map(item => item.product.id));
+    else setSelectedIds(inStockItems.map(item => item.product.id));
   };
 
   const toggleSelect = (id: number) => {
@@ -144,6 +151,7 @@ export const CartPage: React.FC = () => {
               className="flex flex-col gap-4"
             >
               {items.map((item: CartItem, index) => {
+                const isOutOfStock = item.product.stock <= 0;
                 const isSelected = selectedIds.includes(item.product.id);
                 return (
                   <motion.div
@@ -152,13 +160,14 @@ export const CartPage: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                     className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl border transition-colors duration-300 ${isSelected ? 'border-black dark:border-white bg-white dark:bg-[#0a0a0a]' : 'border-neutral-100 dark:border-neutral-900 bg-neutral-50 dark:bg-neutral-900/50'
-                      }`}
+                      } ${isOutOfStock ? 'opacity-70' : ''}`}
                   >
                     <div className="flex items-center gap-4 w-full sm:w-auto">
                       <button
-                        onClick={() => toggleSelect(item.product.id)}
+                        onClick={() => !isOutOfStock && toggleSelect(item.product.id)}
+                        disabled={isOutOfStock}
                         className={`w-5 h-5 flex-shrink-0 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-black border-black dark:bg-white dark:border-white' : 'border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#0a0a0a]'
-                          }`}
+                          } ${isOutOfStock ? 'cursor-not-allowed opacity-50 bg-neutral-200' : ''}`}
                       >
                         {isSelected && <Check size={12} className="text-white dark:text-black" strokeWidth={3} />}
                       </button>
@@ -187,26 +196,43 @@ export const CartPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 ml-9 sm:ml-0">
-                      {/* Quantity selector */}
-                      <div className="flex items-center rounded-lg bg-neutral-100 dark:bg-neutral-900 p-0.5 border border-neutral-200 dark:border-neutral-800">
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-black shadow-sm text-black dark:text-white hover:opacity-75 transition-opacity"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="w-8 text-center text-sm font-bold text-black dark:text-white">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-black shadow-sm text-black dark:text-white hover:opacity-75 transition-opacity"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
+                      {isOutOfStock ? (
+                        <div className="flex flex-col items-center mr-4">
+                          <span className="text-sm font-bold text-red-500">Đã hết hàng</span>
+                          <span className="text-xs text-neutral-400">Vui lòng xóa khỏi giỏ</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="flex items-center rounded-lg bg-neutral-100 dark:bg-neutral-900 p-0.5 border border-neutral-200 dark:border-neutral-800">
+                            <button
+                              onClick={() => {
+                                if (item.quantity <= 1) {
+                                  toast.error('Số lượng tối thiểu là 1. Vui lòng bấm nút xóa nếu muốn bỏ sản phẩm này.', { icon: '⚠️' });
+                                  return;
+                                }
+                                updateQuantity(item.product.id, item.quantity - 1)
+                              }}
+                              className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-black shadow-sm text-black dark:text-white hover:opacity-75 transition-opacity"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="w-8 text-center text-sm font-bold text-black dark:text-white">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                              className="w-7 h-7 rounded-md flex items-center justify-center bg-white dark:bg-black shadow-sm text-black dark:text-white hover:opacity-75 transition-opacity"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
+                          <span className="text-[10px] font-medium text-neutral-400">Còn {item.product.stock} sp</span>
+                        </div>
+                      )}
 
-                      <span className="font-bold text-base text-black dark:text-white min-w-[100px] text-right tracking-tight">
-                        {formatPrice(item.product.price * item.quantity)}
-                      </span>
+                      {!isOutOfStock && (
+                        <span className="font-bold text-base text-black dark:text-white min-w-[100px] text-right tracking-tight">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </span>
+                      )}
 
                       <button
                         onClick={() => removeFromCart(item.product.id)}

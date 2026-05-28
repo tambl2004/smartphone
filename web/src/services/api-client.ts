@@ -1,5 +1,5 @@
 import type { ApiResponse, PaginatedResponse } from '../types/api';
-import type { Category, Product, User, FAQ } from '../types';
+import type { Category, Product, User, FAQ, CartItem } from '../types';
 
 export type Order = Record<string, unknown>;
 
@@ -71,8 +71,15 @@ export const apiClient = {
   updateFAQ: (id: number, payload: Partial<FAQ>, token?: string) => request<null>(`/faqs/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
   deleteFAQ: (id: number, token?: string) => request<null>(`/faqs/${id}`, { method: 'DELETE', token }),
 
-
-
   getUsers: (params?: ListParams, token?: string) => request<PaginatedResponse<User>['data']>(`/users${toQueryString(params)}`, { token }),
   getOrders: (params?: ListParams, token?: string) => request<PaginatedResponse<Order>['data']>(`/orders${toQueryString(params)}`, { token }),
+
+  getCart: (token: string) => request<{ items: CartItem[] }>('/customers/me/cart', { token }),
+  upsertCartItem: (productId: number, quantity: number, token: string) => request<null>(`/customers/me/cart/${productId}`, { method: 'POST', body: JSON.stringify({ quantity }), token }),
+  deleteCartItem: (productId: number, token: string) => request<null>(`/customers/me/cart/${productId}`, { method: 'DELETE', token }),
+  clearCart: (token: string) => request<null>('/customers/me/cart', { method: 'DELETE', token }),
+
+  getWishlist: (token: string) => request<{ items: Product[] }>('/customers/me/wishlist', { token }),
+  toggleWishlistItem: (productId: number, token: string) => request<{ added: boolean }>(`/customers/me/wishlist/${productId}`, { method: 'POST', token }),
+  deleteWishlistItem: (productId: number, token: string) => request<null>(`/customers/me/wishlist/${productId}`, { method: 'DELETE', token }),
 };
