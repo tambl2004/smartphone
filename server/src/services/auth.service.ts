@@ -36,6 +36,10 @@ export const loginUser = async ({
   const isValid = await bcrypt.compare(password, user.passwordHash);
   if (!isValid) return null;
 
+  if (user.status === 'blocked') {
+    throw new Error('Tài khoản đã bị khóa, liên hệ admin để mở');
+  }
+
   const token = buildToken(user);
 
   return {

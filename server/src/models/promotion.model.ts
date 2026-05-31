@@ -64,7 +64,7 @@ export const createPromotion = async (data: Partial<Promotion>): Promise<number>
       data.usageLimit ?? null,
       data.perUserLimit ?? 1,
       data.isActive ? 1 : 0
-    ]
+    ] as any[]
   );
   return Number((result as any).insertId);
 };
@@ -85,7 +85,7 @@ export const updatePromotion = async (id: number, data: Partial<Promotion>): Pro
       data.perUserLimit ?? 1,
       data.isActive ? 1 : 0,
       id
-    ]
+    ] as any[]
   );
 };
 

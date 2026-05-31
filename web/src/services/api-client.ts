@@ -3,6 +3,29 @@ import type { Category, Product, User, FAQ, CartItem } from '../types';
 
 export type Order = Record<string, unknown>;
 
+export type AdminCustomer = {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  totalOrders: number;
+  totalSpent: string;
+  status: 'active' | 'blocked';
+  joinDate: string | null;
+  lastOrderDate: string | null;
+};
+
+export type AdminCustomerOrder = {
+  id: number;
+  orderCode: string;
+  totalAmount: string;
+  status: string;
+  paymentMethod: string;
+  createdAt: string;
+  items: { productName: string; productImage: string; quantity: number; unitPrice: string; lineTotal: string }[];
+};
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api';
 
 type ApiFetchOptions = RequestInit & {
@@ -72,6 +95,9 @@ export const apiClient = {
   deleteFAQ: (id: number, token?: string) => request<null>(`/faqs/${id}`, { method: 'DELETE', token }),
 
   getUsers: (params?: ListParams, token?: string) => request<PaginatedResponse<User>['data']>(`/users${toQueryString(params)}`, { token }),
+  createUser: (payload: Partial<User> & { password?: string }, token?: string) => request<{ id: number }>('/users', { method: 'POST', body: JSON.stringify(payload), token }),
+  updateUser: (id: number, payload: Partial<User> & { password?: string }, token?: string) => request<null>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
+  deleteUser: (id: number, token?: string) => request<null>(`/users/${id}`, { method: 'DELETE', token }),
   getOrders: (params?: ListParams, token?: string) => request<PaginatedResponse<Order>['data']>(`/orders${toQueryString(params)}`, { token }),
 
   getCart: (token: string) => request<{ items: CartItem[] }>('/customers/me/cart', { token }),
@@ -82,6 +108,15 @@ export const apiClient = {
   getWishlist: (token: string) => request<{ items: Product[] }>('/customers/me/wishlist', { token }),
   toggleWishlistItem: (productId: number, token: string) => request<{ added: boolean }>(`/customers/me/wishlist/${productId}`, { method: 'POST', token }),
   deleteWishlistItem: (productId: number, token: string) => request<null>(`/customers/me/wishlist/${productId}`, { method: 'DELETE', token }),
+
+  // Admin customer management
+  // Admin customer management
+  getCustomers: (params?: ListParams, token?: string) => request<{ items: AdminCustomer[] }>(`/customers${toQueryString(params)}`, { token }),
+  toggleCustomerStatus: (id: number, token?: string) => request<{ status: string }>(`/customers/${id}/status`, { method: 'PATCH', token }),
+  getCustomerOrders: (id: number, token?: string) => request<{ items: AdminCustomerOrder[] }>(`/customers/${id}/orders`, { token }),
+  
+  // Dashboard & Reports
+  getDashboardData: (token: string) => request<any>('/dashboard/overview', { token }),
 };
 
 export { request as apiRequest };

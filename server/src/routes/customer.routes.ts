@@ -8,11 +8,19 @@ import {
   clearMyCart,
   toggleMyWishlist,
   upsertMyCart,
+  toggleCustomerStatusHandler,
+  getCustomerOrdersHandler,
 } from '../controllers/customer.controller.js';
+import { authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
 
-router.get('/', listCustomers);
+// Admin-only routes
+router.get('/', authorizeRoles('admin'), listCustomers);
+router.patch('/:id/status', authorizeRoles('admin'), toggleCustomerStatusHandler);
+router.get('/:id/orders', authorizeRoles('admin'), getCustomerOrdersHandler);
+
+// User routes (cart & wishlist)
 router.get('/me/cart', getMyCart);
 router.post('/me/cart/:productId', upsertMyCart);
 router.delete('/me/cart/:productId', deleteMyCartItem);

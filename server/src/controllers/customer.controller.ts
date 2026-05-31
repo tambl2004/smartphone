@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getCustomers } from '../services/customer.service.js';
+import { getCustomers, toggleCustomerStatus, getCustomerOrders } from '../services/customer.service.js';
 import { sendError, sendSuccess } from '../utils/api-response.js';
 import { getCartItemsByUserId, upsertCartItem, removeCartItem, clearCartByUserId } from '../models/cart.model.js';
 import { getWishlistItemsByUserId, toggleWishlistItem, removeWishlistItem } from '../models/wishlist.model.js';
@@ -42,10 +42,44 @@ const mapProductRecord = (row: CustomerProductRow) => ({
   specs: row.specs ?? [],
 });
 
-export const listCustomers = async (_req: Request, res: Response) => {
-  const items = await getCustomers();
+export const listCustomers = async (req: Request, res: Response) => {
+  try {
+    const search = req.query.search as string | undefined;
+    const status = req.query.status as string | undefined;
+    const items = await getCustomers(search, status);
+    return sendSuccess(res, 200, 'Customers retrieved', { items });
+  } catch (error) {
+    return sendError(res, 500, 'Failed to fetch customers');
+  }
+};
 
-  return res.status(200).json({ items });
+export const toggleCustomerStatusHandler = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id) || id <= 0) {
+      return sendError(res, 400, 'Invalid customer id');
+    }
+    const newStatus = await toggleCustomerStatus(id);
+    if (!newStatus) {
+      return sendError(res, 404, 'Customer not found');
+    }
+    return sendSuccess(res, 200, `Customer ${newStatus === 'blocked' ? 'blocked' : 'unblocked'} successfully`, { status: newStatus });
+  } catch (error) {
+    return sendError(res, 500, 'Failed to update customer status');
+  }
+};
+
+export const getCustomerOrdersHandler = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id) || id <= 0) {
+      return sendError(res, 400, 'Invalid customer id');
+    }
+    const orders = await getCustomerOrders(id);
+    return sendSuccess(res, 200, 'Customer orders retrieved', { items: orders });
+  } catch (error) {
+    return sendError(res, 500, 'Failed to fetch customer orders');
+  }
 };
 
 export const getMyCart = async (req: Request, res: Response) => {

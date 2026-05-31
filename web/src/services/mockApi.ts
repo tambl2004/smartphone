@@ -1,6 +1,4 @@
 import productsData from '@data/products.json';
-import categoriesData from '@data/categories.json';
-
 import bannersData from '@data/banners.json';
 import { Product, Category } from '@types';
 
@@ -56,7 +54,11 @@ export const mockApi = {
 
   getCategories: async (): Promise<Category[]> => {
     await delay(200);
-    return (categoriesData as Record<string, unknown>[]).map(c => ({ ...c, id: Number(c.id) })) as unknown as Category[];
+    return [
+      { id: 1, name: 'Smartphones', slug: 'smartphones' },
+      { id: 2, name: 'Tablets', slug: 'tablets' },
+      { id: 3, name: 'Accessories', slug: 'accessories' }
+    ];
   },
 
   getBanners: async () => {

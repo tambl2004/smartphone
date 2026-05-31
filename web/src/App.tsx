@@ -21,6 +21,7 @@ import { DashboardPage } from '@pages/admin/DashboardPage';
 import { ProductsPage } from '@pages/admin/ProductsPage';
 import { OrdersPage } from '@pages/admin/OrdersPage';
 import { CustomersPage } from '@pages/admin/CustomersPage';
+import { UsersPage } from '@pages/admin/UsersPage';
 import { ContentBannersPage } from '@pages/admin/BannersPage';
 import { ContentPromotionsPage } from '@pages/admin/PromotionsPage';
 import { ContentCategoriesPage } from '@pages/admin/CategoriesPage';
@@ -55,6 +56,7 @@ function AppContent() {
         <Route path="/admin/products" element={<ProductsPage />} />
         <Route path="/admin/orders" element={<OrdersPage />} />
         <Route path="/admin/customers" element={<CustomersPage />} />
+        <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/content/banners" element={<ContentBannersPage />} />
         <Route path="/admin/content/promotions" element={<ContentPromotionsPage />} />
         <Route path="/admin/content/categories" element={<ContentCategoriesPage />} />

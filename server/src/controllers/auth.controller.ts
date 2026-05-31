@@ -17,10 +17,17 @@ export const login = async (req: Request, res: Response) => {
     return sendError(res, 400, 'Email và mật khẩu là bắt buộc');
   }
 
-  const result = await loginUser({ email, password });
-  if (!result) return sendError(res, 401, 'Email hoặc mật khẩu không đúng');
+  try {
+    const result = await loginUser({ email, password });
+    if (!result) return sendError(res, 401, 'Email hoặc mật khẩu không đúng');
 
-  return sendSuccess(res, 200, 'Đăng nhập thành công', result);
+    return sendSuccess(res, 200, 'Đăng nhập thành công', result);
+  } catch (error: any) {
+    if (error.message === 'Tài khoản đã bị khóa, liên hệ admin để mở') {
+      return sendError(res, 403, error.message);
+    }
+    return sendError(res, 500, 'Lỗi máy chủ');
+  }
 };
 
 // ─── Register – Step 1: send OTP ─────────────────────────────────────────────

@@ -1,6 +1,10 @@
 export interface User {
-  id: string;
-  name: string;
+  id: number;
+  fullName: string;
   email: string;
-  avatar?: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  dateOfBirth?: string | null;
+  role: 'admin' | 'user';
+  status: 'active' | 'blocked';
 }

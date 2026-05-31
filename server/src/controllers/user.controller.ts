@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
-import { createUser, deleteUser, findUserById, findAllUsers, updateUser } from '../models/user.model.js';
+import { createUser, deleteUser, findUserById, findAllUsers, updateUser, findUserByEmail } from '../models/user.model.js';
+import bcrypt from 'bcryptjs';
 import { sendError, sendSuccess } from '../utils/api-response.js';
 import { parseListQuery } from '../utils/pagination.js';
 
@@ -17,16 +18,42 @@ export const detailUser = async (req: Request, res: Response) => {
 };
 
 export const createUserHandler = async (req: Request, res: Response) => {
-  const id = await createUser(req.body);
+  const existing = await findUserByEmail(req.body.email);
+  if (existing) {
+    return sendError(res, 400, 'Email đã được sử dụng');
+  }
+
+  const payload = { ...req.body, isVerified: true };
+  if (req.body.password) {
+    payload.passwordHash = await bcrypt.hash(req.body.password, 10);
+  } else {
+    payload.passwordHash = await bcrypt.hash('12345678', 10);
+  }
+  
+  const id = await createUser(payload);
   return sendSuccess(res, 201, 'User created', { id });
 };
 
 export const updateUserHandler = async (req: Request, res: Response) => {
-  await updateUser(toNumber(req.params.id), req.body);
+  const userId = toNumber(req.params.id);
+  const user = await findUserById(userId);
+  if (!user) return sendError(res, 404, 'Không tìm thấy tài khoản');
+  if (user.role === 'admin') return sendError(res, 403, 'Không thể sửa tài khoản admin');
+
+  const payload = { ...req.body };
+  if (req.body.password) {
+    payload.passwordHash = await bcrypt.hash(req.body.password, 10);
+  }
+  await updateUser(userId, payload);
   return sendSuccess(res, 200, 'User updated', null);
 };
 
 export const deleteUserHandler = async (req: Request, res: Response) => {
-  await deleteUser(toNumber(req.params.id));
+  const userId = toNumber(req.params.id);
+  const user = await findUserById(userId);
+  if (!user) return sendError(res, 404, 'Không tìm thấy tài khoản');
+  if (user.role === 'admin') return sendError(res, 403, 'Không thể xóa tài khoản admin');
+
+  await deleteUser(userId);
   return sendSuccess(res, 200, 'User deleted', null);
 };

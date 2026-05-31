@@ -10,6 +10,9 @@ export type OrderRecord = {
   customerEmail: string;
   customerPhone: string;
   shippingAddress: string;
+  subtotalAmount: string;
+  discountAmount: string;
+  promotionCode: string | null;
   totalAmount: string;
   paymentMethod: 'cod' | 'bank_transfer' | 'credit_card' | 'wallet';
   status: 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
@@ -43,7 +46,7 @@ export const findAllOrders = async (query: ListQuery) => {
   const total = Number((countRows as Array<{ total: number }>)[0]?.total ?? 0);
 
   const [rows] = await getDb().query(
-    `SELECT id, order_code AS orderCode, customer_id AS customerId, customer_name AS customerName, customer_email AS customerEmail, customer_phone AS customerPhone, shipping_address AS shippingAddress, total_amount AS totalAmount, payment_method AS paymentMethod, status, created_at AS createdAt, updated_at AS updatedAt FROM orders ${whereSql} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
+    `SELECT id, order_code AS orderCode, customer_id AS customerId, customer_name AS customerName, customer_email AS customerEmail, customer_phone AS customerPhone, shipping_address AS shippingAddress, subtotal_amount AS subtotalAmount, discount_amount AS discountAmount, promotion_code AS promotionCode, total_amount AS totalAmount, payment_method AS paymentMethod, status, created_at AS createdAt, updated_at AS updatedAt FROM orders ${whereSql} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
     [...params, query.limit, offset],
   );
 
@@ -129,20 +132,8 @@ export const createOrder = async (
   try {
     await db.beginTransaction();
 
-    // 1. Ensure customer exists
-    const [existingCustomer]: any = await db.query('SELECT id FROM customers WHERE email = ?', [orderData.customerEmail]);
-    let customerId: number;
-    
-    if (existingCustomer.length > 0) {
-      customerId = existingCustomer[0].id;
-    } else {
-      const customerCode = 'CUS' + Date.now().toString().slice(-6);
-      const [insertResult]: any = await db.query(
-        'INSERT INTO customers (code, full_name, email, phone, join_date) VALUES (?, ?, ?, ?, CURDATE())',
-        [customerCode, orderData.customerName, orderData.customerEmail, orderData.customerPhone]
-      );
-      customerId = insertResult.insertId;
-    }
+    // 1. Use userId directly as customer_id (users table = customers)
+    const customerId = userId;
 
     // 2. Insert order
     const [orderResult] = await db.query(
@@ -188,7 +179,7 @@ export const findMyOrders = async (userId: number) => {
   const [rows] = await getDb().query(
     `SELECT id, order_code AS orderCode, subtotal_amount AS subtotalAmount, discount_amount AS discountAmount, promotion_code AS promotionCode, total_amount AS totalAmount, status, payment_method AS paymentMethod, shipping_address AS shippingAddress, customer_phone AS customerPhone, customer_name AS customerName, created_at AS createdAt 
      FROM orders 
-     WHERE customer_email = (SELECT email FROM users WHERE id = ?)
+     WHERE customer_id = ?
      ORDER BY created_at DESC`,
     [userId]
   );

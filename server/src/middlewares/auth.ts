@@ -11,9 +11,11 @@ declare global {
   }
 }
 
+import { findUserById } from '../models/user.model.js';
+
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
 
   if (!header?.startsWith('Bearer ')) {
@@ -23,6 +25,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   try {
     const token = header.replace('Bearer ', '');
     const decoded = jwt.verify(token, JWT_SECRET) as JwtUserPayload;
+    
+    const user = await findUserById(decoded.id);
+    if (!user || user.status === 'blocked') {
+      return sendError(res, 403, 'Tài khoản của bạn đã bị khóa');
+    }
+
     req.user = decoded;
     return next();
   } catch {

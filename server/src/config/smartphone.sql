@@ -163,25 +163,7 @@ CREATE TABLE IF NOT EXISTS news_article_related (
     CONSTRAINT fk_related_article_target FOREIGN KEY (related_article_id) REFERENCES news_articles(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- Commerce
-CREATE TABLE IF NOT EXISTS customers (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    code VARCHAR(50) NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NULL,
-    avatar_url VARCHAR(500) NULL,
-    total_orders INT NOT NULL DEFAULT 0,
-    total_spent DECIMAL(15,0) NOT NULL DEFAULT 0,
-    status ENUM('active', 'blocked') NOT NULL DEFAULT 'active',
-    join_date DATE NULL,
-    last_order_date DATE NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_customers_code (code),
-    UNIQUE KEY uk_customers_email (email)
-) ENGINE=InnoDB;
+-- Commerce (customers = users with role='user', no separate table needed)
 
 CREATE TABLE IF NOT EXISTS orders (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -191,7 +173,10 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_email VARCHAR(255) NOT NULL,
     customer_phone VARCHAR(20) NOT NULL,
     shipping_address VARCHAR(500) NOT NULL,
+    subtotal_amount DECIMAL(15,0) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(15,0) NOT NULL DEFAULT 0,
     total_amount DECIMAL(15,0) NOT NULL,
+    promotion_code VARCHAR(50) NULL,
     payment_method ENUM('cod', 'bank_transfer', 'credit_card', 'wallet') NOT NULL DEFAULT 'cod',
     status ENUM('pending', 'confirmed', 'shipping', 'delivered', 'cancelled') NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -200,7 +185,7 @@ CREATE TABLE IF NOT EXISTS orders (
     UNIQUE KEY uk_orders_code (order_code),
     KEY idx_orders_customer (customer_id),
     KEY idx_orders_status (status),
-    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS order_items (
