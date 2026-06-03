@@ -88,6 +88,7 @@ export const apiClient = {
   getCategories: () => request<{ items: Category[] }>('/categories'),
   createCategory: (payload: Partial<Category>, token?: string) => request<{ id: number }>('/categories', { method: 'POST', body: JSON.stringify(payload), token }),
   updateCategory: (id: number, payload: Partial<Category>, token?: string) => request<null>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(payload), token }),
+  deleteCategory: (id: number, token?: string) => request<null>(`/categories/${id}`, { method: 'DELETE', token }),
 
   getFAQs: () => request<{ items: FAQ[] }>('/faqs'),
   createFAQ: (payload: Partial<FAQ>, token?: string) => request<{ id: number }>('/faqs', { method: 'POST', body: JSON.stringify(payload), token }),
@@ -116,7 +117,7 @@ export const apiClient = {
   getCustomerOrders: (id: number, token?: string) => request<{ items: AdminCustomerOrder[] }>(`/customers/${id}/orders`, { token }),
   
   // Dashboard & Reports
-  getDashboardData: (token: string) => request<any>('/dashboard/overview', { token }),
+  getDashboardData: (token: string) => request<Record<string, unknown>>('/dashboard/overview', { token }),
 };
 
 export { request as apiRequest };

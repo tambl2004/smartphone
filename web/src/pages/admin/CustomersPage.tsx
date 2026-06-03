@@ -6,7 +6,9 @@ import { StatusBadge } from '@components/admin/StatusBadge';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
 import { apiClient, type AdminCustomer, type AdminCustomerOrder } from '@services/api-client';
 import { getAuth } from '@services/auth.service';
+import { Pagination } from '@/components/common/Pagination';
 import { formatPrice, formatDate } from '@utils/format';
+import { useRouter } from '@routes/router';
 
 const SERVER_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace('/api', '');
 const getAvatarUrl = (url: string | null) => {
@@ -16,15 +18,34 @@ const getAvatarUrl = (url: string | null) => {
 };
 
 export const CustomersPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const { path } = useRouter();
+  const [searchQuery, setSearchQuery] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('email') || params.get('search') || '';
+  });
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [prevPath, setPrevPath] = useState(path);
+  if (path !== prevPath) {
+    setPrevPath(path);
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('email') || params.get('search') || '';
+    setSearchQuery(query);
+  }
   const [historyCustomer, setHistoryCustomer] = useState<AdminCustomer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<AdminCustomerOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [lockTarget, setLockTarget] = useState<AdminCustomer | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = customers.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedCustomers = customers.slice((page - 1) * limit, page * limit);
 
   const fetchCustomers = useCallback(async () => {
     const auth = getAuth();
@@ -141,7 +162,7 @@ export const CustomersPage: React.FC = () => {
       {/* Content View */}
       {!loading && viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {customers.map((customer, index) => (
+          {paginatedCustomers.map((customer, index) => (
             <motion.div key={customer.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }}
               className="bg-[#141414] border border-white/[0.06] rounded-2xl p-5 hover:border-white/[0.12] transition-all group">
               <div className="flex items-start gap-4">
@@ -203,7 +224,7 @@ export const CustomersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {customers.map((customer) => (
+                {paginatedCustomers.map((customer) => (
                   <tr key={customer.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -256,6 +277,17 @@ export const CustomersPage: React.FC = () => {
 
       {!loading && customers.length === 0 && (
         <div className="py-16 text-center"><UsersIcon size={40} className="opacity-10 mx-auto mb-3" /><p className="text-sm opacity-30">Không tìm thấy khách hàng nào</p></div>
+      )}
+
+      {!loading && customers.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
       )}
 
       {/* Order History Modal */}

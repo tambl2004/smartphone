@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Sidebar } from './Sidebar';
 import { AdminNavbar } from './AdminNavbar';
 
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
@@ -42,7 +43,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
       <motion.main
         initial={false}
-        animate={{ marginLeft: sidebarWidth }}
+        animate={{ marginLeft: `${sidebarWidth}px` }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         className="pt-16 min-h-screen"
       >

@@ -12,7 +12,8 @@ import {
   Tag,
   Layers,
   HelpCircle,
-  UserCog
+  UserCog,
+  MessageSquare
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
   { icon: Package, label: 'Sản phẩm', path: '/admin/products' },
   { icon: ShoppingCart, label: 'Đơn hàng', path: '/admin/orders' },
+  { icon: MessageSquare, label: 'Chat', path: '/admin/chat' },
   { icon: Users, label: 'Khách hàng', path: '/admin/customers' },
   { icon: UserCog, label: 'Tài khoản', path: '/admin/users' },
   { icon: ImageIcon, label: 'Banner', path: '/admin/content/banners' },

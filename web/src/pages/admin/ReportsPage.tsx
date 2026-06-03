@@ -23,7 +23,7 @@ export const ReportsPage: React.FC = () => {
       try {
         const res = await apiClient.getDashboardData(auth.token);
         if (res.success) {
-          setData(res.data);
+          setData(res.data as unknown as DashboardData);
         }
       } catch (error) {
         console.error('Failed to load reports data', error);
@@ -121,7 +121,7 @@ export const ReportsPage: React.FC = () => {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#ffffff15', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
                     itemStyle={{ color: '#fff' }}
-                    formatter={(value: number) => [formatCurrency(Number(value || 0)), 'Doanh thu']}
+                    formatter={(value: any) => [formatCurrency(Number(value || 0)), 'Doanh thu']}
                     labelStyle={{ color: '#ffffff50', marginBottom: '4px' }}
                   />
                   <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
@@ -161,7 +161,7 @@ export const ReportsPage: React.FC = () => {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#ffffff15', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
                     itemStyle={{ color: '#fff' }}
-                    formatter={(value: number) => [formatCurrency(Number(value || 0)), 'Doanh thu']}
+                    formatter={(value: any) => [formatCurrency(Number(value || 0)), 'Doanh thu']}
                   />
                   <Legend 
                     verticalAlign="bottom" 

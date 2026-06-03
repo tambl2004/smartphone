@@ -12,6 +12,7 @@ import userRoutes from './user.routes.js';
 import locationRoutes from './location.routes.js';
 import addressRoutes from './address.routes.js';
 import profileRoutes from './profile.routes.js';
+import chatRoutes from './chat.routes.js';
 import { authenticate, authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
@@ -30,6 +31,7 @@ router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/faqs', faqRoutes);
 router.use('/promotions', promotionRoutes);
-
+// Chat realtime (messages + rooms)
+router.use('/chat', authenticate, chatRoutes);
 
 export default router;

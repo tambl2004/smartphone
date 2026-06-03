@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Bell, Sun, Moon, User, ChevronDown, LogOut, Settings, Menu } from 'lucide-react';
 import { useRouter } from '@routes/router';
+import { getAuth } from '../../services/auth.service';
 
 interface AdminNavbarProps {
   sidebarWidth: number;
@@ -15,6 +16,13 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ sidebarWidth, isDark, 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [user, setUser] = useState(() => getAuth()?.user || null);
+
+  React.useEffect(() => {
+    const handleStorageChange = () => setUser(getAuth()?.user || null);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const notifications = [
     { id: 1, text: 'Đơn hàng mới #ORD-2024-009', time: '2 phút trước', unread: true },
@@ -135,10 +143,16 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ sidebarWidth, isDark, 
             onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
             className={`flex items-center gap-2.5 px-2 h-9 rounded-lg ${isDark ? 'hover:bg-white/[0.06]' : 'hover:bg-black/[0.06]'} transition-all duration-200 border-none outline-none`}
           >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <User size={14} className="text-white" />
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User size={14} className="text-white" />
+              )}
             </div>
-            <span className={`text-sm ${isDark ? 'text-white/70' : 'text-black/70'} font-medium hidden sm:block`}>Admin</span>
+            <span className={`text-sm ${isDark ? 'text-white/70' : 'text-black/70'} font-medium hidden sm:block truncate max-w-[120px]`}>
+              {user?.fullName || 'Admin'}
+            </span>
             <ChevronDown size={14} className={`${isDark ? 'text-white/30' : 'text-black/30'} hidden sm:block`} />
           </button>
 

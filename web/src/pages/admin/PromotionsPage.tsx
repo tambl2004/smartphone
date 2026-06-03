@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
 import { promotionService, Promotion } from '@services/promotion.service';
 import { getAuth } from '@services/auth.service';
+import { Pagination } from '@/components/common/Pagination';
 
 export const ContentPromotionsPage: React.FC = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
@@ -12,6 +13,13 @@ export const ContentPromotionsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = promotions.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedPromotions = promotions.slice((page - 1) * limit, page * limit);
   
   const [formData, setFormData] = useState<Partial<Promotion>>(() => ({
     code: '',
@@ -145,7 +153,7 @@ export const ContentPromotionsPage: React.FC = () => {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {promotions.map((promo, i) => (
+          {paginatedPromotions.map((promo, i) => (
             <motion.div key={promo.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
               className="p-5 rounded-2xl bg-[#141414] border border-white/[0.06] hover:border-white/[0.12] transition-all relative group">
               <div className="flex items-start justify-between">
@@ -189,7 +197,7 @@ export const ContentPromotionsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {promotions.map((promo) => (
+                {paginatedPromotions.map((promo) => (
                   <tr key={promo.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -235,6 +243,17 @@ export const ContentPromotionsPage: React.FC = () => {
         </div>
       )}
 
+      {promotions.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
+      )}
+
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
@@ -258,7 +277,7 @@ export const ContentPromotionsPage: React.FC = () => {
                     <label className="block text-xs font-medium opacity-60 mb-1.5">Loại giảm giá</label>
                     <select value={formData.discountType} onChange={e => setFormData({...formData, discountType: e.target.value as 'fixed'|'percent'})}
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      >
                       <option value="fixed" className="bg-white dark:bg-[#1A1A1A]">Giảm tiền trực tiếp (VNĐ)</option>
                       <option value="percent" className="bg-white dark:bg-[#1A1A1A]">Giảm theo %</option>
                     </select>

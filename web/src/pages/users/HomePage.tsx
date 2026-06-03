@@ -4,7 +4,7 @@ import { getProducts, getCategories } from '@services/product.service';
 import { apiClient } from '../../services/api-client';
 import { ProductCard } from '@/components/users/product/ProductCard';
 import { ProductQuickView } from '@/components/users/product/ProductQuickView';
-import { Link, useRouter } from '@routes/router';
+import { Link } from '@routes/router';
 import { motion } from 'motion/react';
 import { ArrowRight, Truck, ShieldCheck, CreditCard, RefreshCw, Star, Clock, Zap, ChevronDown, ChevronUp, Smartphone, Tablet, Headphones } from 'lucide-react';
 
@@ -61,7 +61,7 @@ export const HomePage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { navigate } = useRouter();
+
 
   useEffect(() => {
     void getProducts({ sortBy: 'id', sortOrder: 'desc', limit: 8 }).then((result) => {
@@ -279,7 +279,6 @@ export const HomePage: React.FC = () => {
               >
                 <ProductCard
                   product={prod}
-                  onQuickView={(p) => navigate(`/product/${p.id}`)}
                 />
               </motion.div>
             ))}
@@ -312,7 +311,6 @@ export const HomePage: React.FC = () => {
               >
                 <ProductCard
                   product={prod}
-                  onQuickView={(p) => navigate(`/product/${p.id}`)}
                 />
               </motion.div>
             ))}

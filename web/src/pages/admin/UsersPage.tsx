@@ -7,6 +7,7 @@ import { getAuth } from '@services/auth.service';
 import type { User } from '@types';
 import { StatusBadge } from '@components/admin/StatusBadge';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
+import { Pagination } from '@/components/common/Pagination';
 
 export const UsersPage: React.FC = () => {
   const SERVER_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace('/api', '');
@@ -19,6 +20,13 @@ export const UsersPage: React.FC = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = users.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedUsers = users.slice((page - 1) * limit, page * limit);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -235,7 +243,7 @@ export const UsersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-4 text-sm text-white/60">#{user.id}</td>
                     <td className="p-4 text-center">
@@ -292,6 +300,17 @@ export const UsersPage: React.FC = () => {
             </table>
           </div>
         </div>
+      )}
+
+      {!loading && users.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
       )}
 
       {/* Add/Edit Modal */}

@@ -4,6 +4,7 @@ import { getProducts, type ProductListMeta } from '@services/product.service';
 import { ProductFilter } from '@/components/users/product/ProductFilter';
 import { ProductSort } from '@/components/users/product/ProductSort';
 import { ProductList } from '@/components/users/product/ProductList';
+import { Pagination } from '@/components/common/Pagination';
 import { useRouter } from '@routes/router';
 import { motion } from 'motion/react';
 
@@ -15,7 +16,9 @@ export const ProductListPage: React.FC = () => {
 
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [, setMeta] = useState<ProductListMeta>({ page: 1, limit: 20, total: 0, totalPages: 1 });
+  const [meta, setMeta] = useState<ProductListMeta>({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryId, setCategoryId] = useState<number | undefined>(
     initialCategory ? Number(initialCategory) : undefined
@@ -34,6 +37,7 @@ export const ProductListPage: React.FC = () => {
         setBrand(undefined);
         setPriceRange({ min: 0, max: 100000000 });
       }
+      setPage(1);
     }, 0);
     return () => clearTimeout(timer);
   }, [path]);
@@ -57,7 +61,8 @@ export const ProductListPage: React.FC = () => {
       brand,
       sortBy,
       sortOrder,
-      limit: 100,
+      page,
+      limit,
     });
 
     // Client-side price filter
@@ -68,7 +73,7 @@ export const ProductListPage: React.FC = () => {
     setProducts(filtered);
     setMeta(result.meta);
     setIsLoading(false);
-  }, [categoryId, brand, priceRange, sort, path]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [categoryId, brand, priceRange, sort, path, page, limit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,12 +108,12 @@ export const ProductListPage: React.FC = () => {
           >
             <ProductFilter
               selectedCategoryId={categoryId}
-              onCategoryChange={setCategoryId}
+              onCategoryChange={(val) => { setCategoryId(val); setPage(1); }}
               selectedBrand={brand}
-              onBrandChange={setBrand}
+              onBrandChange={(val) => { setBrand(val); setPage(1); }}
               selectedPriceRange={priceRange}
-              onPriceRangeChange={(min, max) => setPriceRange({ min, max })}
-              onReset={handleResetFilters}
+              onPriceRangeChange={(min, max) => { setPriceRange({ min, max }); setPage(1); }}
+              onReset={() => { handleResetFilters(); setPage(1); }}
             />
           </motion.div>
 
@@ -119,7 +124,7 @@ export const ProductListPage: React.FC = () => {
             >
               <ProductSort
                 selectedSort={sort}
-                onSortChange={setSort}
+                onSortChange={(val) => { setSort(val); setPage(1); }}
                 resultsCount={products.length}
               />
 
@@ -128,6 +133,17 @@ export const ProductListPage: React.FC = () => {
                   products={products}
                   isLoading={isLoading}
                 />
+                
+                {!isLoading && products.length > 0 && (
+                  <Pagination
+                    meta={meta}
+                    onPageChange={setPage}
+                    onLimitChange={(newLimit) => {
+                      setLimit(newLimit);
+                      setPage(1);
+                    }}
+                  />
+                )}
               </div>
             </motion.div>
           </div>

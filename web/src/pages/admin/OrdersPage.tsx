@@ -1,17 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Eye, X, MapPin, Phone, Mail, CreditCard, Package, Trash2, Printer, ChevronDown } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Search, Eye, X, MapPin, Phone, Mail, CreditCard, Package, Trash2, Printer } from 'lucide-react';
 import { ChartCard } from '@components/admin/ChartCard';
 import { formatPrice, formatDate } from '@utils/format';
 import { orderService, OrderRecord } from '@services/order.service';
 import { getAuth } from '@services/auth.service';
+import { exportOrderInvoice } from '@utils/exportPdf';
+import { Pagination } from '@/components/common/Pagination';
+import { useRouter } from '@routes/router';
 
 export const OrdersPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const { path } = useRouter();
+  const [searchQuery, setSearchQuery] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('email') || params.get('search') || '';
+  });
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = orders.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedOrders = orders.slice((page - 1) * limit, page * limit);
+
+  const [prevPath, setPrevPath] = useState(path);
+  if (path !== prevPath) {
+    setPrevPath(path);
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('email') || params.get('search') || '';
+    setSearchQuery(query);
+  }
 
   useEffect(() => {
     let active = true;
@@ -123,7 +146,7 @@ export const OrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, index) => (
+              {paginatedOrders.map((order, index) => (
                 <motion.tr key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.02 }}
                   className="border-b border-neutral-50 dark:border-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors group">
                   <td className="py-3 pr-4"><span className="text-sm font-mono text-indigo-600 dark:text-indigo-400 cursor-pointer" onClick={() => setSelectedOrder(order)}>{order.orderCode}</span></td>
@@ -165,7 +188,7 @@ export const OrdersPage: React.FC = () => {
                           order.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
                           'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
                         }`}
-                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
+                        
                       >
                         <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
                         <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
@@ -173,7 +196,7 @@ export const OrdersPage: React.FC = () => {
                         <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
                         <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
                       </select>
-                      <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                      
                     </div>
                   </td>
                   <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}><span className="text-sm text-neutral-500">{formatDate(order.createdAt)}</span></td>
@@ -194,6 +217,17 @@ export const OrdersPage: React.FC = () => {
           </table>
         </div>
       </ChartCard>
+
+      {!loading && orders.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
+      )}
 
       {/* Order Detail Modal */}
       <AnimatePresence>
@@ -236,7 +270,7 @@ export const OrdersPage: React.FC = () => {
                               selectedOrder.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
                               'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
                             }`}
-                            style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
+                            
                           >
                             <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
                             <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
@@ -244,7 +278,7 @@ export const OrdersPage: React.FC = () => {
                             <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
                             <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
                           </select>
-                          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
+                          
                         </div>
                       </div>
                       <div className="text-right">
@@ -334,7 +368,16 @@ export const OrdersPage: React.FC = () => {
                   <Trash2 size={16} /> Xóa đơn hàng
                 </button>
                 <button 
-                  onClick={() => window.print()}
+                  onClick={async () => {
+                    const toastId = toast.loading('Đang tạo hóa đơn...');
+                    try {
+                      await exportOrderInvoice(selectedOrder);
+                      toast.success('Xuất hóa đơn thành công!', { id: toastId });
+                    } catch (e) {
+                      console.error(e);
+                      toast.error('Có lỗi xảy ra khi tạo hóa đơn', { id: toastId });
+                    }
+                  }}
                   className="inline-flex h-12 items-center justify-center bg-indigo-600 hover:bg-indigo-700 px-6 font-bold rounded-xl transition-colors text-sm gap-2 border-none shadow-sm"
                   style={{ color: '#ffffff', backgroundColor: '#4f46e5' }}
                 >

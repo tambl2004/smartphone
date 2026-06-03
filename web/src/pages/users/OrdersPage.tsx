@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import toast from 'react-hot-toast';
 import { Package, Clock, CheckCircle2, Truck, XCircle, ArrowRight, X, Printer, ArrowLeft } from 'lucide-react';
 import { getAuth } from '@services/auth.service';
 import { orderService, OrderRecord } from '@services/order.service';
 import { formatPrice, formatDate } from '@utils/format';
 import { Link } from '@routes/router';
+import { exportOrderInvoice } from '@utils/exportPdf';
 
 const statusMap: Record<string, { label: string, color: string, icon: React.ReactNode }> = {
   pending: { label: 'Chờ xác nhận', color: 'text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200 dark:border-amber-500/20', icon: <Clock size={14} /> },
@@ -230,7 +232,16 @@ export const UserOrdersPage: React.FC = () => {
                 <ArrowLeft size={16} /> Quay lại
               </button>
               <button 
-                onClick={() => window.print()}
+                onClick={async () => {
+                  const toastId = toast.loading('Đang tải font và tạo hóa đơn...');
+                  try {
+                    await exportOrderInvoice(selectedOrder);
+                    toast.success('Đã tải xuống hóa đơn PDF', { id: toastId });
+                  } catch (e) {
+                    console.error(e);
+                    toast.error('Lỗi khi tải font chữ hoặc tạo hóa đơn', { id: toastId });
+                  }
+                }}
                 className="inline-flex h-12 items-center justify-center bg-black text-white dark:bg-white dark:text-black px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
               >
                 <Printer size={16} /> In hóa đơn

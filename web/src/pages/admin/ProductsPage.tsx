@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Plus, Filter, Download, Upload, Edit2, Trash2, Eye, Star, Package, X, Save, FileSpreadsheet, Check } from 'lucide-react';
+import { Search, Plus, Filter, Download, Upload, Edit2, Trash2, Eye, Star, Package, X, Save, FileSpreadsheet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ChartCard } from '@components/admin/ChartCard';
 import { StatusBadge } from '@components/admin/StatusBadge';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
+import { ExportModal } from '@components/admin/ExportModal';
 import { formatPrice } from '@utils/format';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '@services/product.service';
-import type { Product } from '@types';
+import { getProducts, getCategories, createProduct, updateProduct, deleteProduct } from '@services/product.service';
+import type { Product, Category } from '@types';
+import { Pagination } from '@/components/common/Pagination';
 
 type ModalType = 'add' | 'edit' | 'view' | 'import' | 'export' | null;
 
@@ -58,13 +60,16 @@ export const ProductsPage: React.FC = () => {
 
   // Form state for add/edit
   const [formData, setFormData] = useState({ 
-    name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active',
+    name: '', price: '', originalPrice: '', category: '', brand: '', stock: '', status: 'active',
     mainImage: '', image2: '', image3: '', image4: '',
     spec_screen: '', spec_os: '', spec_chip: '', spec_ram: '', spec_rom: '', spec_cam: '', spec_pin: '',
     additionalSpecs: [] as { name: string; value: string }[]
   });
 
-  const categories = ['all', 'Điện thoại', 'Máy tính bảng', 'Phụ kiện'];
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -79,8 +84,22 @@ export const ProductsPage: React.FC = () => {
   };
 
   React.useEffect(() => {
-    const timer = setTimeout(() => fetchProducts(), 0);
-    return () => clearTimeout(timer);
+    const init = async () => {
+      setLoading(true);
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          getProducts({ limit: 100, sortBy: 'id', sortOrder: 'desc' }),
+          getCategories()
+        ]);
+        setProducts(productsRes.items);
+        setCategories(categoriesRes);
+      } catch {
+        toast.error('Lỗi khi tải dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   const filteredProducts = products.filter(p => {
@@ -89,13 +108,17 @@ export const ProductsPage: React.FC = () => {
     return matchSearch && matchCategory;
   });
 
+  const total = filteredProducts.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedProducts = filteredProducts.slice((page - 1) * limit, page * limit);
+
   const toggleSelect = (id: number) => {
     setSelectedProducts(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
   };
 
   const openAdd = () => {
     setFormData({ 
-      name: '', price: '', originalPrice: '', category: 'Điện thoại', brand: '', stock: '', status: 'active',
+      name: '', price: '', originalPrice: '', category: categories[0]?.name || '', brand: '', stock: '', status: 'active',
       mainImage: '', image2: '', image3: '', image4: '',
       spec_screen: '', spec_os: '', spec_chip: '', spec_ram: '', spec_rom: '', spec_cam: '', spec_pin: '',
       additionalSpecs: [] 
@@ -110,7 +133,10 @@ export const ProductsPage: React.FC = () => {
     const mainImage = p.images?.find(i => i.isPrimary)?.imageUrl || p.images?.[0]?.imageUrl || '';
     const others = p.images?.filter(i => i.imageUrl !== mainImage) || [];
     
-    const getUrl = (url: string) => url.startsWith('http') ? url : (url ? `${API_URL}${url}` : '');
+    const getUrl = (url?: string) => {
+      if (!url) return '';
+      return url.startsWith('http') ? url : `${API_URL}${url}`;
+    };
 
     setFormData({ 
       name: p.name, price: String(p.price), originalPrice: String(p.originalPrice || ''), category: p.categoryName, brand: p.brand, stock: String(p.stock), status: p.status,
@@ -147,8 +173,8 @@ export const ProductsPage: React.FC = () => {
       originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
       stock: Number(formData.stock),
       status: formData.status as 'active' | 'draft' | 'out_of_stock' | 'hidden',
-      categoryId: 1, // hardcode for now
-      brand: 'Apple', // hardcode for now
+      categoryId: categories.find(c => c.name === formData.category)?.id || 1, // fallback to 1 if not found
+      brand: formData.brand || 'Apple', // fallback if empty
       slug: formData.name.toLowerCase().replace(/ /g, '-'),
       images,
       specs,
@@ -187,10 +213,17 @@ export const ProductsPage: React.FC = () => {
     setModalType(null);
   };
 
-  const handleExport = () => {
-    toast.success('Export dữ liệu thành công! File đã được tải xuống.');
-    setModalType(null);
-  };
+  const exportColumns = [
+    { header: 'ID', key: 'id' },
+    { header: 'Tên sản phẩm', key: 'name' },
+    { header: 'Thương hiệu', key: 'brand' },
+    { header: 'Danh mục', key: 'categoryName' },
+    { header: 'Giá bán', key: 'price' },
+    { header: 'Giá gốc', key: (row: Record<string, unknown>) => row.originalPrice || 0 },
+    { header: 'Tồn kho', key: 'stock' },
+    { header: 'Đánh giá', key: 'rating' },
+    { header: 'Trạng thái', key: 'status' }
+  ];
 
   // Shared components moved outside
 
@@ -220,12 +253,12 @@ export const ProductsPage: React.FC = () => {
           <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-10 pl-10 pr-4 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm placeholder:opacity-30 outline-none focus:border-indigo-500/50 transition-all" />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter size={14} className="opacity-30" />
-          {categories.map(cat => (
-            <button key={cat} onClick={() => setFilterCategory(cat)}
-              className={`h-8 px-3 rounded-full text-xs font-medium transition-all border-none outline-none ${filterCategory === cat ? 'bg-indigo-600 text-white' : 'bg-white/[0.04] opacity-50 hover:opacity-100 hover:bg-white/[0.08]'}`}>
-              {cat === 'all' ? 'Tất cả' : cat}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <Filter size={14} className="opacity-30 shrink-0" />
+          {[{ id: 'all', name: 'Tất cả' }, ...categories].map(cat => (
+            <button key={cat.id} onClick={() => setFilterCategory(cat.name === 'Tất cả' ? 'all' : cat.name)}
+              className={`h-8 px-3 rounded-full text-xs font-medium transition-all border-none outline-none whitespace-nowrap ${filterCategory === (cat.name === 'Tất cả' ? 'all' : cat.name) ? 'bg-indigo-600 text-white' : 'bg-white/[0.04] opacity-50 hover:opacity-100 hover:bg-white/[0.08]'}`}>
+              {cat.name}
             </button>
           ))}
         </div>
@@ -247,7 +280,7 @@ export const ProductsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((product, index) => (
+              {paginatedProducts.map((product, index) => (
                 <motion.tr key={product.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.03 }}
                   className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group">
                   <td className="py-3 pr-3"><input type="checkbox" checked={selectedProducts.includes(product.id)} onChange={() => toggleSelect(product.id)} className="w-4 h-4 rounded accent-indigo-600" /></td>
@@ -284,6 +317,17 @@ export const ProductsPage: React.FC = () => {
         )}
       </ChartCard>
 
+      {!loading && filteredProducts.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
+      )}
+
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {(modalType === 'add' || modalType === 'edit') && (
@@ -305,10 +349,10 @@ export const ProductsPage: React.FC = () => {
                       <label className="block text-xs font-medium text-white/40 mb-1.5">Danh mục</label>
                       <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
                         className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
-                        <option value="Điện thoại" className="bg-white dark:bg-[#1A1A1A]">Điện thoại</option>
-                        <option value="Máy tính bảng" className="bg-white dark:bg-[#1A1A1A]">Máy tính bảng</option>
-                        <option value="Phụ kiện" className="bg-white dark:bg-[#1A1A1A]">Phụ kiện</option>
+                        >
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.name} className="bg-white dark:bg-[#1A1A1A]">{cat.name}</option>
+                        ))}
                       </select>
                     </div>
                     <InputField label="Thương hiệu" value={formData.brand} onChange={v => setFormData({...formData, brand: v})} placeholder="VD: Apple" />
@@ -319,7 +363,7 @@ export const ProductsPage: React.FC = () => {
                       <label className="block text-xs font-medium text-white/40 mb-1.5">Trạng thái</label>
                       <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
                         className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                        style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                        >
                         <option value="active" className="bg-white dark:bg-[#1A1A1A]">Đang bán</option>
                         <option value="draft" className="bg-white dark:bg-[#1A1A1A]">Nháp</option>
                         <option value="outOfStock" className="bg-white dark:bg-[#1A1A1A]">Hết hàng</option>
@@ -512,35 +556,16 @@ export const ProductsPage: React.FC = () => {
       </AnimatePresence>
 
       {/* Export Modal */}
-      <AnimatePresence>
-        {modalType === 'export' && (
-          <ModalWrapper maxW="max-w-md" onClose={() => setModalType(null)}>
-            <ModalHeader title="Export sản phẩm" onClose={() => setModalType(null)} />
-            <div className="p-5 space-y-4">
-              <p className="text-sm text-white/60">Chọn định dạng xuất dữ liệu:</p>
-              {[
-                { label: 'Excel (.xlsx)', desc: 'Xuất đầy đủ thông tin sản phẩm', icon: '📊' },
-                { label: 'CSV (.csv)', desc: 'Tương thích nhiều phần mềm', icon: '📄' },
-              ].map(fmt => (
-                <div key={fmt.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-indigo-500/30 cursor-pointer transition-all">
-                  <span className="text-xl">{fmt.icon}</span>
-                  <div className="flex-1"><p className="text-sm text-white/80 font-medium">{fmt.label}</p><p className="text-xs text-white/30">{fmt.desc}</p></div>
-                  <Check size={16} className="text-indigo-400" />
-                </div>
-              ))}
-              <div className="p-3 rounded-lg bg-white/[0.02]">
-                <p className="text-xs text-white/40">Sẽ xuất <span className="text-white/70 font-medium">{products.length} sản phẩm</span> theo bộ lọc hiện tại.</p>
-              </div>
-            </div>
-            <div className="flex gap-3 px-5 pb-5">
-              <button onClick={() => setModalType(null)} className="flex-1 h-10 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/70 hover:text-white transition-all outline-none">Hủy</button>
-              <button onClick={handleExport} className="flex-1 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm text-white font-medium transition-all outline-none border-none flex items-center justify-center gap-2">
-                <Download size={14} /> Tải xuống
-              </button>
-            </div>
-          </ModalWrapper>
-        )}
-      </AnimatePresence>
+      <ExportModal
+        isOpen={modalType === 'export'}
+        onClose={() => setModalType(null)}
+        title="Export sản phẩm"
+        filename="danh-sach-san-pham"
+        data={filteredProducts as unknown as Record<string, unknown>[]}
+        columns={exportColumns as { header: string; key: string | ((row: Record<string, unknown>) => unknown) }[]}
+        summaryText={`Sẽ xuất ${filteredProducts.length} sản phẩm theo bộ lọc hiện tại.`}
+        buttonLabel="Tải xuống"
+      />
 
       {/* Delete Confirmation */}
       <ConfirmationModal

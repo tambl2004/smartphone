@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Save, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
+import { Pagination } from '@/components/common/Pagination';
 
 const initialBanners = [
   { id: 1, title: 'iPhone 15 Pro Max - Khám phá titan', image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400', status: 'active', position: 'Hero Banner', createdAt: '2024-12-01' },
@@ -18,6 +19,13 @@ export const ContentBannersPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string; [key: string]: unknown } | null>(null);
   
   const [formData, setFormData] = useState({ title: '', image: '', position: 'Hero Banner', status: 'active' });
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = banners.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedBanners = banners.slice((page - 1) * limit, page * limit);
 
   const openAdd = () => {
     setEditingId(null);
@@ -75,7 +83,7 @@ export const ContentBannersPage: React.FC = () => {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {banners.map((banner, i) => (
+          {paginatedBanners.map((banner, i) => (
             <motion.div key={banner.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
               className="rounded-xl overflow-hidden border border-white/[0.06] group relative">
               <div className="relative aspect-video">
@@ -109,7 +117,7 @@ export const ContentBannersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {banners.map((banner) => (
+                {paginatedBanners.map((banner) => (
                   <tr key={banner.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -144,6 +152,15 @@ export const ContentBannersPage: React.FC = () => {
         </div>
       )}
 
+      <Pagination
+        meta={{ page, limit, total, totalPages }}
+        onPageChange={setPage}
+        onLimitChange={(newLimit) => {
+          setLimit(newLimit);
+          setPage(1);
+        }}
+      />
+
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
@@ -171,7 +188,7 @@ export const ContentBannersPage: React.FC = () => {
                     <label className="block text-xs font-medium opacity-40 mb-1.5">Vị trí</label>
                     <select value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})}
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      >
                       <option value="Hero Banner" className="bg-white dark:bg-[#1A1A1A]">Hero Banner</option>
                       <option value="Sub Banner" className="bg-white dark:bg-[#1A1A1A]">Sub Banner</option>
                       <option value="Popup" className="bg-white dark:bg-[#1A1A1A]">Popup</option>
@@ -181,7 +198,7 @@ export const ContentBannersPage: React.FC = () => {
                     <label className="block text-xs font-medium opacity-40 mb-1.5">Trạng thái</label>
                     <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
                       className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                      style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
+                      >
                       <option value="active" className="bg-white dark:bg-[#1A1A1A]">Hiển thị</option>
                       <option value="draft" className="bg-white dark:bg-[#1A1A1A]">Nháp</option>
                     </select>

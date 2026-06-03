@@ -5,6 +5,7 @@ export type CategoryRecord = {
   slug: string;
   name: string;
   icon: string | null;
+  productCount?: number;
 };
 
 export type CategoryPayload = {
@@ -14,7 +15,13 @@ export type CategoryPayload = {
 };
 
 export const findAllCategories = async () => {
-  const [rows] = await getDb().query('SELECT id, slug, name, icon FROM categories ORDER BY id DESC');
+  const [rows] = await getDb().query(`
+    SELECT c.id, c.slug, c.name, c.icon, COUNT(p.id) as productCount 
+    FROM categories c 
+    LEFT JOIN products p ON c.id = p.category_id 
+    GROUP BY c.id 
+    ORDER BY c.id DESC
+  `);
   return rows as CategoryRecord[];
 };
 

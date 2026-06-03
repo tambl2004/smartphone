@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import mongoose from 'mongoose';
 
 type DatabaseConnection = mysql.Connection;
 
@@ -35,6 +36,36 @@ export const getMongoConfig = (): MongoConfig | null => {
   }
 
   return { uri, dbName };
+};
+
+// ─── MongoDB / Mongoose ───────────────────────────────────────────────────────
+export const connectMongoDB = async (): Promise<void> => {
+  const config = getMongoConfig();
+
+  if (!config) {
+    console.warn(
+      '[MongoDB] MONGO_URI hoặc MONGO_DB_NAME chưa được cấu hình → bỏ qua kết nối MongoDB.',
+    );
+    return;
+  }
+
+  try {
+    await mongoose.connect(config.uri, { dbName: config.dbName });
+    console.log(
+      `[MongoDB] Kết nối thành công → ${config.uri} (db: ${config.dbName})`,
+    );
+  } catch (err) {
+    console.error('[MongoDB] Kết nối thất bại:', err);
+    // Không throw để server vẫn khởi động được với MySQL
+  }
+
+  mongoose.connection.on('disconnected', () => {
+    console.warn('[MongoDB] Đã mất kết nối MongoDB.');
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    console.log('[MongoDB] Đã kết nối lại MongoDB.');
+  });
 };
 
 export const connectDatabase = async () => {

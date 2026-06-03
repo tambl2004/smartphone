@@ -27,6 +27,7 @@ import { ContentPromotionsPage } from '@pages/admin/PromotionsPage';
 import { ContentCategoriesPage } from '@pages/admin/CategoriesPage';
 import { ReportsPage } from '@pages/admin/ReportsPage';
 import { FaqsPage } from '@pages/admin/FaqsPage';
+import { ChatPage } from '@pages/admin/ChatPage';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -55,6 +56,7 @@ function AppContent() {
         <Route path="/admin" element={<DashboardPage />} />
         <Route path="/admin/products" element={<ProductsPage />} />
         <Route path="/admin/orders" element={<OrdersPage />} />
+        <Route path="/admin/chat" element={<ChatPage />} />
         <Route path="/admin/customers" element={<CustomersPage />} />
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/content/banners" element={<ContentBannersPage />} />

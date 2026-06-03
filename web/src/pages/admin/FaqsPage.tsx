@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 import { apiClient } from '../../services/api-client';
 import { FAQ } from '../../types';
 import toast from 'react-hot-toast';
+import { Pagination } from '@/components/common/Pagination';
 
 
 export const FaqsPage: React.FC = () => {
@@ -18,6 +19,13 @@ export const FaqsPage: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
   
   const token = localStorage.getItem('auth_token:v1') || undefined;
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = faqs.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedFaqs = faqs.slice((page - 1) * limit, page * limit);
 
   const fetchFaqs = useCallback(async () => {
     await Promise.resolve();
@@ -146,7 +154,7 @@ export const FaqsPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                faqs.map((faq) => (
+                paginatedFaqs.map((faq) => (
                   <tr key={faq.id} className="hover:bg-neutral-50 transition-colors">
                     <td className="px-6 py-4 font-bold text-black">{faq.sortOrder}</td>
                     <td className="px-6 py-4 font-semibold text-black max-w-[200px] truncate">{faq.question}</td>
@@ -187,6 +195,17 @@ export const FaqsPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {!isLoading && faqs.length > 0 && (
+        <Pagination
+          meta={{ page, limit, total, totalPages }}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+        />
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

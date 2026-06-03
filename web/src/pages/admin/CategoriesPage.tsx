@@ -1,31 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Save, Smartphone, Laptop, Headphones, Watch, LayoutGrid, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmationModal } from '@components/admin/ConfirmationModal';
 
-const initialCategories = [
-  { id: 1, name: 'Điện thoại', count: 28, icon: 'Smartphone' },
-  { id: 2, name: 'Máy tính bảng', count: 12, icon: 'Laptop' },
-  { id: 3, name: 'Phụ kiện', count: 45, icon: 'Headphones' },
-  { id: 4, name: 'Đồng hồ thông minh', count: 18, icon: 'Watch' },
-];
+import { Pagination } from '@/components/common/Pagination';
+import { apiClient } from '@services/api-client';
+import { getAuth } from '@services/auth.service';
+import type { Category } from '@types';
 
 export const ContentCategoriesPage: React.FC = () => {
-  const [categories, setCategories] = useState(initialCategories);
+  const auth = getAuth();
+  const token = auth?.token;
+  const [categories, setCategories] = useState<(Category & { count?: number })[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string; [key: string]: unknown } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<(Category & { count?: number }) | null>(null);
   
   const [formData, setFormData] = useState({ name: '', icon: 'Smartphone' });
 
-  const getIcon = (name: string) => {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  
+  const total = categories.length;
+  const totalPages = Math.ceil(total / limit) || 1;
+  const paginatedCategories = categories.slice((page - 1) * limit, page * limit);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await apiClient.getCategories();
+      const items = res.data?.items || [];
+      setCategories(items.map((c: Category & { productCount?: number }) => ({ ...c, count: c.productCount || 0 })));
+    } catch (error) {
+      toast.error('Lỗi khi tải danh mục');
+      console.error(error);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchCategories();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchCategories]);
+
+  const getIcon = (name: string | null | undefined) => {
+    if (!name) return <Smartphone size={16} />;
     switch (name) {
       case 'Laptop': return <Laptop size={16} />;
       case 'Headphones': return <Headphones size={16} />;
       case 'Watch': return <Watch size={16} />;
-      default: return <Smartphone size={16} />;
+      case 'Smartphone': return <Smartphone size={16} />;
+      default: return <span className="text-base leading-none flex items-center justify-center">{name}</span>;
     }
   };
 
@@ -35,30 +62,42 @@ export const ContentCategoriesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const openEdit = (c: { id: number; name: string; icon: string; count: number; [key: string]: unknown }) => {
+  const openEdit = (c: Category & { count?: number }) => {
     setEditingId(c.id);
-    setFormData({ name: c.name, icon: c.icon });
+    setFormData({ name: c.name, icon: c.icon || 'Smartphone' });
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) { toast.error('Vui lòng nhập tên danh mục'); return; }
     
-    if (editingId) {
-      setCategories(prev => prev.map(c => c.id === editingId ? { ...c, ...formData } : c));
-      toast.success('Cập nhật danh mục thành công!');
-    } else {
-      setCategories(prev => [...prev, { id: Date.now(), ...formData, count: 0 }]);
-      toast.success('Thêm danh mục thành công!');
+    try {
+      if (editingId) {
+        await apiClient.updateCategory(editingId, formData, token);
+        toast.success('Cập nhật danh mục thành công!');
+      } else {
+        await apiClient.createCategory(formData, token);
+        toast.success('Thêm danh mục thành công!');
+      }
+      setIsModalOpen(false);
+      void fetchCategories();
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi lưu danh mục');
+      console.error(error);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setCategories(prev => prev.filter(c => c.id !== deleteTarget.id));
-    toast.success(`Đã xóa danh mục "${deleteTarget.name}"!`);
-    setDeleteTarget(null);
+    try {
+      await apiClient.deleteCategory(deleteTarget.id, token);
+      toast.success(`Đã xóa danh mục "${deleteTarget.name}"!`);
+      setDeleteTarget(null);
+      void fetchCategories();
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi xóa danh mục');
+      console.error(error);
+    }
   };
 
   return (
@@ -85,7 +124,7 @@ export const ContentCategoriesPage: React.FC = () => {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {categories.map((cat, i) => (
+          {paginatedCategories.map((cat, i) => (
             <motion.div key={cat.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
               className="p-4 rounded-2xl bg-[#141414] border border-white/[0.06] hover:border-white/[0.12] transition-all flex items-center justify-between group">
               <div className="flex items-center gap-3">
@@ -117,7 +156,7 @@ export const ContentCategoriesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
-                {categories.map((cat) => (
+                {paginatedCategories.map((cat) => (
                   <tr key={cat.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -144,6 +183,15 @@ export const ContentCategoriesPage: React.FC = () => {
         </div>
       )}
 
+      <Pagination
+        meta={{ page, limit, total, totalPages }}
+        onPageChange={setPage}
+        onLimitChange={(newLimit) => {
+          setLimit(newLimit);
+          setPage(1);
+        }}
+      />
+
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
@@ -162,15 +210,9 @@ export const ContentCategoriesPage: React.FC = () => {
                     className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium opacity-40 mb-1.5">Biểu tượng</label>
-                  <select value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})}
-                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-black dark:text-white outline-none focus:border-indigo-500/50 transition-all appearance-none"
-                    style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}>
-                    <option value="Smartphone" className="bg-white dark:bg-[#1A1A1A]">Điện thoại (Smartphone)</option>
-                    <option value="Laptop" className="bg-white dark:bg-[#1A1A1A]">Máy tính (Laptop)</option>
-                    <option value="Headphones" className="bg-white dark:bg-[#1A1A1A]">Phụ kiện (Headphones)</option>
-                    <option value="Watch" className="bg-white dark:bg-[#1A1A1A]">Đồng hồ (Watch)</option>
-                  </select>
+                  <label className="block text-xs font-medium opacity-40 mb-1.5">Biểu tượng (Emoji hoặc Tên Icon)</label>
+                  <input type="text" value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} placeholder="VD: 📱, 💻, Smartphone, Laptop"
+                    className="w-full h-10 px-3 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm outline-none focus:border-indigo-500/50 transition-all" />
                 </div>
               </div>
               <div className="flex gap-3 px-5 pb-5">

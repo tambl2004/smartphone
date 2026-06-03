@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Download, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -14,6 +12,8 @@ interface ExportModalProps {
   data: Record<string, unknown>[];
   columns: { header: string; key: string | ((row: Record<string, unknown>) => unknown) }[];
   periodLabel?: string;
+  summaryText?: string;
+  buttonLabel?: string;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -23,9 +23,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   filename = 'bao-cao',
   data,
   columns,
-  periodLabel
+  periodLabel,
+  summaryText,
+  buttonLabel = 'Xuất ngay'
 }) => {
-  const [selectedFormat, setSelectedFormat] = useState<'xlsx' | 'pdf' | 'csv'>('xlsx');
+  const [selectedFormat, setSelectedFormat] = useState<'xlsx' | 'csv'>('xlsx');
 
   const handleExport = () => {
     if (!data || data.length === 0) {
@@ -66,35 +68,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         document.body.removeChild(link);
         toast.success('Xuất file CSV thành công!');
       } 
-      else if (selectedFormat === 'pdf') {
-        const doc = new jsPDF();
-        
-        // Cấu hình font tiếng việt nếu cần thiết, tạm thời dùng mặc định
-        doc.setFontSize(18);
-        doc.text(title, 14, 22);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(100);
-        if (periodLabel) {
-          doc.text(`Ky bao cao: ${periodLabel}`, 14, 30);
-        }
-        doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, 14, 36);
-
-        const tableHeaders = columns.map(c => c.header);
-        const tableData = exportData.map(row => columns.map(c => row[c.header] as string | number));
-
-        (doc as typeof doc & { autoTable: (options: Record<string, unknown>) => void }).autoTable({
-          startY: 45,
-          head: [tableHeaders],
-          body: tableData,
-          theme: 'grid',
-          styles: { font: 'helvetica', fontSize: 9 },
-          headStyles: { fillColor: [99, 102, 241], textColor: 255 }
-        });
-
-        doc.save(`${fullFilename}.pdf`);
-        toast.success('Xuất file PDF thành công!');
-      }
 
       onClose();
     } catch (error) {
@@ -105,8 +78,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const formats = [
     { id: 'xlsx', label: 'Excel (.xlsx)', desc: 'Báo cáo đầy đủ, dễ dàng tính toán', icon: '📊' },
-    { id: 'csv', label: 'CSV (.csv)', desc: 'Định dạng nhẹ, dùng cho import hệ thống', icon: '📝' },
-    { id: 'pdf', label: 'PDF (.pdf)', desc: 'Trình bày trực quan, sẵn sàng in', icon: '📄' },
+    { id: 'csv', label: 'CSV (.csv)', desc: 'Định dạng nhẹ, dùng cho import hệ thống', icon: '📝' }
   ];
 
   return (
@@ -127,7 +99,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 {formats.map(fmt => (
                   <div 
                     key={fmt.id} 
-                    onClick={() => setSelectedFormat(fmt.id as 'xlsx' | 'pdf' | 'csv')}
+                    onClick={() => setSelectedFormat(fmt.id as 'xlsx' | 'csv')}
                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedFormat === fmt.id ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-500/30' : 'bg-gray-50 dark:bg-white/[0.03] border-gray-100 dark:border-white/[0.06] hover:border-indigo-500/30'}`}
                   >
                     <span className="text-xl">{fmt.icon}</span>
@@ -145,11 +117,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   <p className="text-xs opacity-60">Kỳ báo cáo: <span className="font-medium text-gray-900 dark:text-white">{periodLabel}</span></p>
                 </div>
               )}
+
+              {summaryText && (
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-white/[0.02]">
+                  <p className="text-xs opacity-60">{summaryText}</p>
+                </div>
+              )}
             </div>
             <div className="flex gap-3 px-5 pb-5">
               <button onClick={onClose} className="flex-1 h-10 rounded-lg bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] text-sm opacity-80 hover:opacity-100 transition-all outline-none text-gray-900 dark:text-white">Hủy</button>
-              <button onClick={handleExport} className="flex-1 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm text-white font-medium transition-all outline-none border-none flex items-center justify-center gap-2">
-                <Download size={14} /> Xuất ngay
+              <button onClick={handleExport} className="flex-1 h-10 rounded-lg bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-sm text-white !text-white dark:!text-gray-900 font-medium transition-all outline-none border-none flex items-center justify-center gap-2">
+                <Download size={14} /> {buttonLabel}
               </button>
             </div>
           </motion.div>
