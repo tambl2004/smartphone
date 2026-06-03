@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import toast from 'react-hot-toast';
-import { Package, Clock, CheckCircle2, Truck, XCircle, ArrowRight, X, Printer, ArrowLeft } from 'lucide-react';
+import { Package, Clock, CheckCircle2, Truck, XCircle, ArrowRight, X, Printer, ArrowLeft, Star, MessageSquare } from 'lucide-react';
 import { getAuth } from '@services/auth.service';
 import { orderService, OrderRecord } from '@services/order.service';
+import { apiClient, type OrderReviewItem } from '@services/api-client';
 import { formatPrice, formatDate } from '@utils/format';
 import { Link } from '@routes/router';
 import { exportOrderInvoice } from '@utils/exportPdf';
@@ -16,10 +17,52 @@ const statusMap: Record<string, { label: string, color: string, icon: React.Reac
   cancelled: { label: 'Đã hủy', color: 'text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20', icon: <XCircle size={14} /> },
 };
 
+/** Interactive star rating component */
+const StarRating: React.FC<{
+  value: number;
+  onChange?: (val: number) => void;
+  readonly?: boolean;
+  size?: number;
+}> = ({ value, onChange, readonly = false, size = 20 }) => {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          disabled={readonly}
+          onClick={() => onChange?.(star)}
+          onMouseEnter={() => !readonly && setHover(star)}
+          onMouseLeave={() => !readonly && setHover(0)}
+          className={`transition-transform ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} bg-transparent border-none outline-none p-0`}
+        >
+          <Star
+            size={size}
+            className={`transition-colors ${
+              star <= (hover || value) 
+                ? 'text-yellow-400 fill-yellow-400' 
+                : 'text-neutral-300 dark:text-neutral-600'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export const UserOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+
+  // Review state
+  const [reviewMode, setReviewMode] = useState(false);
+  const [existingReviews, setExistingReviews] = useState<OrderReviewItem[]>([]);
+  const [reviewRatings, setReviewRatings] = useState<Record<number, number>>({});
+  const [reviewComments, setReviewComments] = useState<Record<number, string>>({});
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -39,6 +82,72 @@ export const UserOrdersPage: React.FC = () => {
     };
     void fetchOrders();
   }, []);
+
+  // Fetch existing reviews when opening an order detail modal
+  const fetchOrderReviews = useCallback(async (orderId: number) => {
+    const auth = getAuth();
+    if (!auth?.token) return;
+    setLoadingReviews(true);
+    try {
+      const res = await apiClient.getOrderReviews(orderId, auth.token);
+      if (res.success && res.data) {
+        setExistingReviews(res.data.items);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, []);
+
+  const openOrderDetail = useCallback((order: OrderRecord) => {
+    setSelectedOrder(order);
+    setReviewMode(false);
+    setExistingReviews([]);
+    setReviewRatings({});
+    setReviewComments({});
+    if (order.status === 'delivered') {
+      void fetchOrderReviews(order.id);
+    }
+  }, [fetchOrderReviews]);
+
+  const handleSubmitReviews = async () => {
+    const auth = getAuth();
+    if (!auth?.token || !selectedOrder) return;
+
+    const items = (selectedOrder.items || []).map(item => ({
+      productId: item.productId,
+      rating: reviewRatings[item.productId] || 5,
+      comment: reviewComments[item.productId] || '',
+    }));
+
+    setSubmittingReview(true);
+    try {
+      const res = await apiClient.submitReviews(
+        { orderId: selectedOrder.id, items },
+        auth.token
+      );
+      if (res.success) {
+        toast.success('Đánh giá đã được gửi thành công!');
+        setReviewMode(false);
+        // Refresh reviews
+        void fetchOrderReviews(selectedOrder.id);
+      } else {
+        toast.error(res.message || 'Không thể gửi đánh giá');
+      }
+    } catch {
+      toast.error('Lỗi khi gửi đánh giá');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Helper to check if a product has been reviewed
+  const getProductReview = (productId: number) => {
+    return existingReviews.find(r => r.productId === productId);
+  };
+
+  const isOrderReviewed = selectedOrder?.items?.every(item => getProductReview(item.productId));
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a] pt-32 pb-32">
@@ -92,7 +201,7 @@ export const UserOrdersPage: React.FC = () => {
                     <Package size={16} /> {order.items?.length || 0} sản phẩm
                   </div>
                   <button 
-                    onClick={() => setSelectedOrder(order)}
+                    onClick={() => openOrderDetail(order)}
                     className="text-sm font-bold text-black dark:text-white hover:opacity-70 transition-opacity"
                   >
                     Xem chi tiết
@@ -180,28 +289,69 @@ export const UserOrdersPage: React.FC = () => {
                 <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                   <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Sản phẩm ({selectedOrder.items?.length || 0})</h4>
                   <div className="space-y-4">
-                    {selectedOrder.items?.map((item, i) => (
-                      <div key={i} className="flex items-center gap-4 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 last:pb-0">
-                        <div className="w-16 h-16 rounded-xl bg-white dark:bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-100 dark:border-neutral-700">
-                          {item.productImage ? (
-                            <img 
-                              src={item.productImage.startsWith('http') ? item.productImage : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '') + (item.productImage.startsWith('/') ? '' : '/') + item.productImage} 
-                              alt={item.productName} 
-                              className="w-full h-full object-cover" 
-                            />
-                          ) : (
-                            <Package className="w-8 h-8 m-4 text-neutral-300" />
+                    {selectedOrder.items?.map((item, i) => {
+                      const existingReview = getProductReview(item.productId);
+                      return (
+                        <div key={i} className="border-b border-neutral-100 dark:border-neutral-800 last:border-0 pb-4 last:pb-0">
+                          <div className="flex items-center gap-4 py-1">
+                            <div className="w-16 h-16 rounded-xl bg-white dark:bg-neutral-800 overflow-hidden flex-shrink-0 border border-neutral-100 dark:border-neutral-700">
+                              {item.productImage ? (
+                                <img 
+                                  src={item.productImage.startsWith('http') ? item.productImage : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '') + (item.productImage.startsWith('/') ? '' : '/') + item.productImage} 
+                                  alt={item.productName} 
+                                  className="w-full h-full object-cover" 
+                                />
+                              ) : (
+                                <Package className="w-8 h-8 m-4 text-neutral-300" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-black dark:text-white truncate">{item.productName}</p>
+                              <p className="text-xs text-neutral-500 mt-1">Số lượng: {item.quantity}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-black text-black dark:text-white">{formatPrice(item.lineTotal)}</p>
+                            </div>
+                          </div>
+
+                          {/* Review section - only for delivered orders */}
+                          {selectedOrder.status === 'delivered' && !loadingReviews && (
+                            <div className="mt-2 ml-20">
+                              {existingReview ? (
+                                // Already reviewed - show rating
+                                <div className="flex items-center gap-2">
+                                  <StarRating value={existingReview.rating} readonly size={16} />
+                                  {existingReview.comment && (
+                                    <span className="text-xs text-neutral-500 italic truncate max-w-[180px]">"{existingReview.comment}"</span>
+                                  )}
+                                </div>
+                              ) : reviewMode ? (
+                                // In review mode - show star picker + comment
+                                <div className="space-y-2 bg-neutral-100 dark:bg-neutral-800/60 rounded-xl p-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-neutral-500">Đánh giá:</span>
+                                    <StarRating
+                                      value={reviewRatings[item.productId] || 5}
+                                      onChange={(val) => setReviewRatings(prev => ({ ...prev, [item.productId]: val }))}
+                                      size={18}
+                                    />
+                                  </div>
+                                  <textarea
+                                    placeholder="Viết nhận xét (tùy chọn)..."
+                                    value={reviewComments[item.productId] || ''}
+                                    onChange={(e) => setReviewComments(prev => ({ ...prev, [item.productId]: e.target.value }))}
+                                    className="w-full text-sm bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2.5 resize-none h-16 outline-none focus:border-black dark:focus:border-white transition-colors text-black dark:text-white placeholder:text-neutral-400"
+                                  />
+                                </div>
+                              ) : (
+                                // Not reviewed yet - show hint
+                                <span className="text-xs text-neutral-400 italic">Chưa đánh giá</span>
+                              )}
+                            </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-black dark:text-white truncate">{item.productName}</p>
-                          <p className="text-xs text-neutral-500 mt-1">Số lượng: {item.quantity}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-black text-black dark:text-white">{formatPrice(item.lineTotal)}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -224,28 +374,70 @@ export const UserOrdersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center">
+            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center flex-wrap gap-3">
               <button 
                 onClick={() => setSelectedOrder(null)}
                 className="inline-flex h-12 items-center justify-center bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
               >
                 <ArrowLeft size={16} /> Quay lại
               </button>
-              <button 
-                onClick={async () => {
-                  const toastId = toast.loading('Đang tải font và tạo hóa đơn...');
-                  try {
-                    await exportOrderInvoice(selectedOrder);
-                    toast.success('Đã tải xuống hóa đơn PDF', { id: toastId });
-                  } catch (e) {
-                    console.error(e);
-                    toast.error('Lỗi khi tải font chữ hoặc tạo hóa đơn', { id: toastId });
-                  }
-                }}
-                className="inline-flex h-12 items-center justify-center bg-black text-white dark:bg-white dark:text-black px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
-              >
-                <Printer size={16} /> In hóa đơn
-              </button>
+              
+              <div className="flex items-center gap-3">
+                {/* Review button - only for delivered orders */}
+                {selectedOrder.status === 'delivered' && !loadingReviews && (
+                  <>
+                    {!isOrderReviewed && !reviewMode && (
+                      <button
+                        onClick={() => {
+                          setReviewMode(true);
+                          // Initialize all ratings to 5
+                          const initialRatings: Record<number, number> = {};
+                          selectedOrder.items?.forEach(item => {
+                            initialRatings[item.productId] = 5;
+                          });
+                          setReviewRatings(initialRatings);
+                        }}
+                        className="inline-flex h-12 items-center justify-center bg-yellow-400 text-black px-6 font-bold rounded-xl hover:bg-yellow-500 transition-colors text-sm gap-2"
+                      >
+                        <Star size={16} /> Đánh giá
+                      </button>
+                    )}
+                    {reviewMode && (
+                      <>
+                        <button
+                          onClick={() => setReviewMode(false)}
+                          className="inline-flex h-12 items-center justify-center bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={handleSubmitReviews}
+                          disabled={submittingReview}
+                          className="inline-flex h-12 items-center justify-center bg-yellow-400 text-black px-6 font-bold rounded-xl hover:bg-yellow-500 transition-colors text-sm gap-2 disabled:opacity-50"
+                        >
+                          <MessageSquare size={16} /> {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+
+                <button 
+                  onClick={async () => {
+                    const toastId = toast.loading('Đang tải font và tạo hóa đơn...');
+                    try {
+                      await exportOrderInvoice(selectedOrder);
+                      toast.success('Đã tải xuống hóa đơn PDF', { id: toastId });
+                    } catch (e) {
+                      console.error(e);
+                      toast.error('Lỗi khi tải font chữ hoặc tạo hóa đơn', { id: toastId });
+                    }
+                  }}
+                  className="inline-flex h-12 items-center justify-center bg-black text-white dark:bg-white dark:text-black px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"
+                >
+                  <Printer size={16} /> In hóa đơn
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>

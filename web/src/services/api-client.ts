@@ -118,6 +118,96 @@ export const apiClient = {
   
   // Dashboard & Reports
   getDashboardData: (token: string) => request<Record<string, unknown>>('/dashboard/overview', { token }),
+
+  // Reviews
+  submitReviews: (payload: { orderId: number; items: { productId: number; rating: number; comment?: string }[] }, token: string) =>
+    request<null>('/reviews', { method: 'POST', body: JSON.stringify(payload), token }),
+  getProductReviews: (productId: number) =>
+    request<{ items: ProductReview[] }>(`/reviews/product/${productId}`),
+  getOrderReviews: (orderId: number, token: string) =>
+    request<{ items: OrderReviewItem[] }>(`/reviews/order/${orderId}`, { token }),
+  getReviews: (params?: ListParams, token?: string) =>
+    request<{ items: AdminReview[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/reviews${toQueryString(params)}`, { token }),
+  deleteReview: (id: number, token?: string) =>
+    request<null>(`/reviews/${id}`, { method: 'DELETE', token }),
+
+  // Product Questions / Q&A
+  getProductQuestions: (productId: number) =>
+    request<{ items: ProductQuestion[] }>(`/questions/product/${productId}`),
+  submitQuestion: (payload: { productId: number; content: string; parentId?: number | null }, token: string) =>
+    request<{ id: number }>('/questions', { method: 'POST', body: JSON.stringify(payload), token }),
+  getAdminQuestions: (params?: ListParams, token?: string) =>
+    request<{ items: AdminQuestion[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/questions${toQueryString(params)}`, { token }),
+  getQuestionThread: (id: number, token: string) =>
+    request<AdminQuestion>(`/questions/thread/${id}`, { token }),
+  deleteQuestion: (id: number, token?: string) =>
+    request<null>(`/questions/${id}`, { method: 'DELETE', token }),
+};
+
+export type ProductQuestion = {
+  id: number;
+  productId: number;
+  userId: number;
+  parentId: number | null;
+  content: string;
+  status: 'pending' | 'answered' | 'new_message';
+  createdAt: string;
+  userName: string;
+  userAvatar: string | null;
+  userRole: 'admin' | 'user';
+  replies?: ProductQuestion[];
+};
+
+export type AdminQuestion = {
+  id: number;
+  productId: number;
+  userId: number;
+  parentId: number | null;
+  content: string;
+  status: 'pending' | 'answered' | 'new_message';
+  createdAt: string;
+  userName: string;
+  userEmail: string;
+  userAvatar: string | null;
+  productName: string;
+  productImage: string | null;
+  replies?: ProductQuestion[];
+};
+
+export type ProductReview = {
+  id: number;
+  orderId: number;
+  productId: number;
+  userId: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  userName: string;
+  userAvatar: string | null;
+};
+
+export type OrderReviewItem = {
+  id: number;
+  productId: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+};
+
+export type AdminReview = {
+  id: number;
+  orderId: number;
+  productId: number;
+  userId: number;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  productName: string;
+  productImage: string | null;
+  userName: string;
+  userEmail: string;
+  userAvatar: string | null;
+  orderCode: string;
 };
 
 export { request as apiRequest };

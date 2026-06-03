@@ -26,6 +26,8 @@ import { ContentBannersPage } from '@pages/admin/BannersPage';
 import { ContentPromotionsPage } from '@pages/admin/PromotionsPage';
 import { ContentCategoriesPage } from '@pages/admin/CategoriesPage';
 import { ReportsPage } from '@pages/admin/ReportsPage';
+import { ReviewsPage } from '@pages/admin/ReviewsPage';
+import { QuestionsPage } from '@pages/admin/QuestionsPage';
 import { FaqsPage } from '@pages/admin/FaqsPage';
 import { ChatPage } from '@pages/admin/ChatPage';
 import { Toaster } from 'react-hot-toast';
@@ -67,6 +69,8 @@ function AppContent() {
         {/* Redirect /admin/content to the first sub-page */}
         {basePath === '/admin/content' && <Route path="/admin/content" element={<ContentBannersPage />} />}
         <Route path="/admin/reports" element={<ReportsPage />} />
+        <Route path="/admin/reviews" element={<ReviewsPage />} />
+        <Route path="/admin/questions" element={<QuestionsPage />} />
       </AdminLayout>
     );
   }

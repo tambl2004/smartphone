@@ -13,7 +13,8 @@ import {
   Layers,
   HelpCircle,
   UserCog,
-  MessageSquare
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 
@@ -33,6 +34,8 @@ const menuItems = [
   { icon: Tag, label: 'Khuyến mãi', path: '/admin/content/promotions' },
   { icon: Layers, label: 'Danh mục', path: '/admin/content/categories' },
   { icon: HelpCircle, label: 'Câu hỏi (FAQ)', path: '/admin/content/faqs' },
+  { icon: Star, label: 'Đánh giá', path: '/admin/reviews' },
+  { icon: HelpCircle, label: 'Hỏi đáp (Q&A)', path: '/admin/questions' },
 
   { icon: BarChart3, label: 'Báo cáo', path: '/admin/reports' },
 ];

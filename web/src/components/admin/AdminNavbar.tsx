@@ -11,6 +11,13 @@ interface AdminNavbarProps {
   onToggleSidebar: () => void;
 }
 
+const SERVER_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace('/api', '');
+const getAvatarUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${SERVER_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({ sidebarWidth, isDark, onToggleTheme, onToggleSidebar }) => {
   const { navigate } = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -144,8 +151,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ sidebarWidth, isDark, 
             className={`flex items-center gap-2.5 px-2 h-9 rounded-lg ${isDark ? 'hover:bg-white/[0.06]' : 'hover:bg-black/[0.06]'} transition-all duration-200 border-none outline-none`}
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center overflow-hidden">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              {user?.avatarUrl && getAvatarUrl(user.avatarUrl) ? (
+                <img src={getAvatarUrl(user.avatarUrl)!} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <User size={14} className="text-white" />
               )}
@@ -166,8 +173,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ sidebarWidth, isDark, 
                 className={`absolute right-0 top-12 w-56 ${dropdownBg} rounded-xl shadow-2xl overflow-hidden`}
               >
                 <div className={`px-4 py-3 border-b ${dropdownDivider}`}>
-                  <p className={`text-sm font-semibold ${dropdownText}`}>Admin NEXPHONE</p>
-                  <p className={`text-xs ${profileTextSub} mt-0.5`}>admin@nexphone.vn</p>
+                  <p className={`text-sm font-semibold ${dropdownText}`}>{user?.fullName || 'Admin'}</p>
+                  <p className={`text-xs ${profileTextSub} mt-0.5`}>{user?.email || 'admin@nexphone.vn'}</p>
                 </div>
                 <div className="p-1.5">
                   <button className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm ${menuItemHover} transition-all border-none outline-none`}>

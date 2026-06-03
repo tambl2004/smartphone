@@ -13,6 +13,8 @@ import locationRoutes from './location.routes.js';
 import addressRoutes from './address.routes.js';
 import profileRoutes from './profile.routes.js';
 import chatRoutes from './chat.routes.js';
+import reviewRoutes from './review.routes.js';
+import questionRoutes from './question.routes.js';
 import { authenticate, authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
@@ -33,5 +35,9 @@ router.use('/faqs', faqRoutes);
 router.use('/promotions', promotionRoutes);
 // Chat realtime (messages + rooms)
 router.use('/chat', authenticate, chatRoutes);
+// Reviews (auth handled inside route file per-endpoint)
+router.use('/reviews', reviewRoutes);
+// Questions/Q&A (auth handled inside route file per-endpoint)
+router.use('/questions', questionRoutes);
 
 export default router;
