@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   login,
+  googleLogin,
   register,
   verifyRegister,
   forgotPassword,
@@ -18,6 +19,15 @@ const router = Router();
  *     tags: [Auth]
  */
 router.post('/login', login);
+
+/**
+ * @openapi
+ * /api/auth/google:
+ *   post:
+ *     summary: Đăng nhập bằng Google
+ *     tags: [Auth]
+ */
+router.post('/google', googleLogin);
 
 /**
  * @openapi

@@ -87,6 +87,17 @@ export const connectDatabase = async () => {
     console.error('Failed to run database migration:', error);
   }
 
+  try {
+    await connection.execute(`
+      ALTER TABLE users ADD COLUMN google_id VARCHAR(255) NULL;
+    `);
+    console.log('Database migrated: google_id column added to users table');
+  } catch (error: any) {
+    if (error.code !== 'ER_DUP_FIELDNAME') {
+      console.error('Failed to add google_id column:', error);
+    }
+  }
+
   return connection;
 };
 

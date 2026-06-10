@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import {
   loginUser,
+  loginGoogleUser,
   initiateRegister,
   verifyRegisterOtp,
   initiateForgotPassword,
@@ -27,6 +28,26 @@ export const login = async (req: Request, res: Response) => {
       return sendError(res, 403, error.message);
     }
     return sendError(res, 500, 'Lỗi máy chủ');
+  }
+};
+
+// ─── Google Login ─────────────────────────────────────────────────────────────
+export const googleLogin = async (req: Request, res: Response) => {
+  const { token } = req.body as { token?: string };
+
+  if (!token) {
+    return sendError(res, 400, 'Token không hợp lệ');
+  }
+
+  try {
+    const result = await loginGoogleUser(token);
+    return sendSuccess(res, 200, 'Đăng nhập Google thành công', result);
+  } catch (error: any) {
+    console.error('Lỗi xác thực Google:', error);
+    if (error.message === 'Tài khoản đã bị khóa, liên hệ admin để mở') {
+      return sendError(res, 403, error.message);
+    }
+    return sendError(res, 500, error.message || 'Lỗi xác thực Google');
   }
 };
 

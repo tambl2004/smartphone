@@ -89,6 +89,15 @@ export const authLogin = async (email: string, password: string) => {
   return result;
 };
 
+/** Đăng nhập bằng Google */
+export const authGoogleLogin = async (token: string) => {
+  const result = await post<AuthState>('/auth/google', { token });
+  if (result.ok && result.data) {
+    saveAuth(result.data);
+  }
+  return result;
+};
+
 /** Đăng ký bước 1 – gửi OTP */
 export const authRegister = async (payload: {
   fullName: string;

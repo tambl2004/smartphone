@@ -1,5 +1,6 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import {
   findUserByEmail,
   createUser,
@@ -7,6 +8,10 @@ import {
   clearUserOtp,
   findUserByEmailWithOtp,
   updateUserPassword,
+  findUserByGoogleId,
+  findUserById,
+  updateUserGoogleId,
+  updateUserAvatar,
 } from '../models/user.model.js';
 import type { LoginResponseData } from '../types/auth.js';
 import { sendOtpEmail } from '../utils/email.js';
@@ -184,4 +189,78 @@ export const resetPassword = async ({
   await clearUserOtp(user.id, false);
 
   return { success: true, message: 'Đặt lại mật khẩu thành công' };
+};
+
+export const verifyGoogleToken = async (idToken: string) => {
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+  const client = new OAuth2Client(googleClientId);
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: googleClientId,
+  });
+  const payload = ticket.getPayload();
+  if (!payload) {
+    throw new Error('Xác thực Google thất bại');
+  }
+  return payload;
+};
+
+export const loginGoogleUser = async (idToken: string): Promise<LoginResponseData> => {
+  const payload = await verifyGoogleToken(idToken);
+  const { email, name, picture, sub: googleId } = payload;
+
+  if (!email) {
+    throw new Error('Email Google không hợp lệ');
+  }
+
+  let user = await findUserByGoogleId(googleId);
+
+  if (!user) {
+    user = await findUserByEmail(email);
+
+    if (user) {
+      await updateUserGoogleId(user.id, googleId);
+      user.googleId = googleId;
+      if (!user.avatarUrl && picture) {
+        await updateUserAvatar(user.id, picture);
+        user.avatarUrl = picture;
+      }
+    } else {
+      const userId = await createUser({
+        fullName: name || 'Google User',
+        email,
+        passwordHash: '',
+        isVerified: true,
+        googleId,
+        avatarUrl: picture || null,
+        role: 'user',
+        status: 'active',
+      });
+
+      user = await findUserById(userId);
+      if (!user) {
+        throw new Error('Tạo tài khoản Google thất bại');
+      }
+    }
+  }
+
+  if (user.status === 'blocked') {
+    throw new Error('Tài khoản đã bị khóa, liên hệ admin để mở');
+  }
+
+  const token = buildToken(user);
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
+      dateOfBirth: user.dateOfBirth,
+      role: user.role,
+      status: user.status,
+    },
+  };
 };

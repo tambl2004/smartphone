@@ -11,6 +11,7 @@ export type UserRecord = {
   passwordHash: string;
   role: 'admin' | 'user';
   status: 'active' | 'blocked';
+  googleId: string | null;
 };
 
 export type UserWithOtp = UserRecord & {
@@ -30,6 +31,8 @@ export type UserPayload = {
   otp?: string | null;
   otpExpiresAt?: Date | null;
   isVerified?: boolean;
+  googleId?: string | null;
+  avatarUrl?: string | null;
 };
 
 export const findAllUsers = async (query: ListQuery) => {
@@ -58,7 +61,7 @@ export const findAllUsers = async (query: ListQuery) => {
   const total = Number((countRows as Array<{ total: number }>)[0]?.total ?? 0);
 
   const [rows] = await getDb().query(
-    `SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status FROM users ${whereSql} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
+    `SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status, google_id AS googleId FROM users ${whereSql} ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`,
     [...params, query.limit, offset],
   );
 
@@ -75,7 +78,7 @@ export const findAllUsers = async (query: ListQuery) => {
 
 export const findUserByEmail = async (email: string) => {
   const [rows] = await getDb().query(
-    'SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status FROM users WHERE email = ? LIMIT 1',
+    'SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status, google_id AS googleId FROM users WHERE email = ? LIMIT 1',
     [email],
   );
   return (rows as UserRecord[])[0] ?? null;
@@ -84,7 +87,7 @@ export const findUserByEmail = async (email: string) => {
 export const findUserByEmailWithOtp = async (email: string) => {
   const [rows] = await getDb().query(
     `SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash,
-            role, status, otp_code AS otpCode, otp_expires_at AS otpExpiresAt, is_verified AS isVerified
+            role, status, google_id AS googleId, otp_code AS otpCode, otp_expires_at AS otpExpiresAt, is_verified AS isVerified
      FROM users WHERE email = ? LIMIT 1`,
     [email],
   );
@@ -93,16 +96,24 @@ export const findUserByEmailWithOtp = async (email: string) => {
 
 export const findUserById = async (id: number) => {
   const [rows] = await getDb().query(
-    'SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status FROM users WHERE id = ? LIMIT 1',
+    'SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status, google_id AS googleId FROM users WHERE id = ? LIMIT 1',
     [id],
+  );
+  return (rows as UserRecord[])[0] ?? null;
+};
+
+export const findUserByGoogleId = async (googleId: string) => {
+  const [rows] = await getDb().query(
+    'SELECT id, full_name AS fullName, email, phone, avatar_url AS avatarUrl, date_of_birth AS dateOfBirth, password_hash AS passwordHash, role, status, google_id AS googleId FROM users WHERE google_id = ? LIMIT 1',
+    [googleId],
   );
   return (rows as UserRecord[])[0] ?? null;
 };
 
 export const createUser = async (payload: UserPayload) => {
   const [result] = await getDb().execute(
-    `INSERT INTO users (full_name, email, phone, password_hash, role, status, otp_code, otp_expires_at, is_verified)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO users (full_name, email, phone, password_hash, role, status, otp_code, otp_expires_at, is_verified, google_id, avatar_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       payload.fullName,
       payload.email,
@@ -113,9 +124,15 @@ export const createUser = async (payload: UserPayload) => {
       payload.otp ?? null,
       payload.otpExpiresAt ?? null,
       payload.isVerified ? 1 : 0,
+      payload.googleId ?? null,
+      payload.avatarUrl ?? null,
     ],
   );
   return Number((result as { insertId: number }).insertId);
+};
+
+export const updateUserGoogleId = async (id: number, googleId: string) => {
+  await getDb().execute('UPDATE users SET google_id = ? WHERE id = ?', [googleId, id]);
 };
 
 export const updateUser = async (id: number, payload: UserPayload) => {
