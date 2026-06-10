@@ -66,8 +66,7 @@ export const CartPage: React.FC = () => {
       alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
       return;
     }
-    // Ở đây nếu có logic truyền mảng sản phẩm đã chọn sang trang checkout, thì ta xử lý.
-    // Tạm thời gọi navigate tới trang checkout.
+    sessionStorage.setItem('checkout_selected_ids', JSON.stringify(selectedIds));
     navigate('/checkout');
   };
 

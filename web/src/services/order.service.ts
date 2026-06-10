@@ -33,6 +33,7 @@ export interface OrderRecord {
   totalAmount: number;
   status: string;
   createdAt: string;
+  updatedAt?: string;
   paymentMethod: string;
   shippingAddress: string;
   customerName: string;
@@ -46,6 +47,32 @@ export const orderService = {
     return apiRequest<{ id: number; orderCode: string }>('/orders', {
       method: 'POST',
       body: JSON.stringify(payload),
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  },
+
+  async createMomoPayment(orderId: string, amount: number, token: string) {
+    return apiRequest<{ payUrl: string }>('/momo/payment', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        orderId,
+        orderInfo: `Thanh toán đơn hàng ${orderId} qua MoMo Sandbox`
+      }),
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  },
+
+  async verifyMomoPayment(params: Record<string, string>, token: string) {
+    return apiRequest<{
+      isSuccess: boolean;
+      orderId: string;
+      amount: number;
+      message: string;
+      resultCode: string;
+    }>('/momo/verify', {
+      method: 'POST',
+      body: JSON.stringify(params),
       headers: { Authorization: `Bearer ${token}` }
     });
   },
@@ -82,6 +109,13 @@ export const orderService = {
   async deleteOrder(id: number, token: string) {
     return apiRequest(`/orders/${id}`, {
       method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  },
+
+  async cancelOrder(id: number, token: string) {
+    return apiRequest(`/orders/${id}/cancel`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
     });
   }

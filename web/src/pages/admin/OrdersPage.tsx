@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
-import { Search, Eye, X, MapPin, Phone, Mail, CreditCard, Package, Trash2, Printer } from 'lucide-react';
+import { Search, Eye, X, MapPin, Phone, Mail, CreditCard, Package, Trash2, Printer, Clock, CheckCircle2, Truck, XCircle } from 'lucide-react';
 import { ChartCard } from '@components/admin/ChartCard';
 import { formatPrice, formatDate } from '@utils/format';
 import { orderService, OrderRecord } from '@services/order.service';
@@ -9,6 +9,164 @@ import { getAuth } from '@services/auth.service';
 import { exportOrderInvoice } from '@utils/exportPdf';
 import { Pagination } from '@/components/common/Pagination';
 import { useRouter } from '@routes/router';
+
+const statusMap: Record<string, { label: string, color: string }> = {
+  pending: { label: 'Chờ xử lý', color: 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' },
+  confirmed: { label: 'Đã xác nhận', color: 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' },
+  shipping: { label: 'Đang giao', color: 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' },
+  delivered: { label: 'Đã giao', color: 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' },
+  cancelled: { label: 'Đã hủy', color: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20' },
+};
+
+const AdminOrderStatusStepper: React.FC<{
+  status: string;
+  onStatusChange: (newStatus: string) => void;
+}> = ({ status, onStatusChange }) => {
+  const steps = [
+    { key: 'pending', label: 'Chờ xử lý', icon: Clock },
+    { key: 'confirmed', label: 'Đã xác nhận', icon: CheckCircle2 },
+    { key: 'shipping', label: 'Đang giao', icon: Truck },
+    { key: 'delivered', label: 'Đã giao', icon: Package },
+  ];
+
+  const getActiveIndex = (status: string) => {
+    switch (status) {
+      case 'pending': return 0;
+      case 'confirmed': return 1;
+      case 'shipping': return 2;
+      case 'delivered': return 3;
+      default: return -1;
+    }
+  };
+
+  const activeIndex = getActiveIndex(status);
+
+  return (
+    <div className="w-full bg-neutral-50 dark:bg-neutral-900/30 border-b border-neutral-100 dark:border-neutral-800 p-6 md:p-8">
+      {status === 'cancelled' ? (
+        <div className="max-w-4xl mx-auto bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 flex-shrink-0">
+              <XCircle size={24} />
+            </div>
+            <div>
+              <h5 className="font-bold text-red-600 dark:text-red-400 text-base">Đơn hàng đã hủy</h5>
+              <p className="text-xs text-red-500/80 dark:text-red-400/70 mt-0.5">Trạng thái này không thể tự động khôi phục.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onStatusChange('pending')}
+            className="text-xs font-bold text-neutral-500 hover:text-black dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+          >
+            Khôi phục đơn hàng
+          </button>
+        </div>
+      ) : (
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 relative">
+            {/* Progress Line for Desktop */}
+            <div className="hidden md:block absolute top-[24px] left-[50px] right-[50px] h-[3px] bg-neutral-200 dark:bg-neutral-800 -z-0">
+              <div 
+                className="h-full bg-indigo-600 transition-all duration-500 ease-in-out"
+                style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
+              />
+            </div>
+
+            {steps.map((step, index) => {
+              const StepIcon = step.icon;
+              const isCompleted = index <= activeIndex;
+              const isActive = index === activeIndex;
+
+              return (
+                <button
+                  key={step.key}
+                  onClick={() => onStatusChange(step.key)}
+                  className="flex md:flex-col items-center gap-4 md:gap-2 flex-1 w-full relative z-10 bg-transparent border-none outline-none group cursor-pointer text-left md:text-center"
+                >
+                  {/* Vertical line for mobile */}
+                  {index < steps.length - 1 && (
+                    <div className="md:hidden absolute left-[22px] top-[44px] bottom-[-24px] w-[3px] bg-neutral-200 dark:bg-neutral-800 -z-1">
+                      <div 
+                        className="w-full bg-indigo-600 transition-all duration-500 ease-in-out"
+                        style={{ height: isCompleted && index < activeIndex ? '100%' : '0%' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Circle Icon */}
+                  <div 
+                    className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${
+                      isCompleted 
+                        ? 'bg-indigo-600 border-white dark:border-neutral-900 text-white shadow-lg shadow-indigo-600/20' 
+                        : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-400 group-hover:border-neutral-300 dark:group-hover:border-neutral-700'
+                    } ${isActive ? 'scale-110 ring-4 ring-indigo-600/20' : ''}`}
+                  >
+                    <StepIcon size={18} className={isActive ? 'animate-pulse' : ''} />
+                  </div>
+
+                  {/* Labels */}
+                  <div className="flex flex-col md:items-center min-w-0">
+                    <span 
+                      className={`text-sm font-bold transition-colors duration-300 ${
+                        isCompleted ? 'text-black dark:text-white' : 'text-neutral-400 group-hover:text-neutral-500'
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Click để chuyển
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Guided Actions Panel */}
+          <div className="mt-8 flex justify-center border-t border-neutral-100 dark:border-neutral-800 pt-6">
+            {status === 'pending' && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onStatusChange('confirmed')}
+                  className="inline-flex h-10 items-center justify-center bg-indigo-600 text-white px-5 font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                >
+                  <CheckCircle2 size={16} /> Xác nhận đơn hàng
+                </button>
+                <button
+                  onClick={() => onStatusChange('cancelled')}
+                  className="inline-flex h-10 items-center justify-center bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 px-5 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors text-sm gap-2 border-none cursor-pointer"
+                >
+                  <XCircle size={16} /> Hủy đơn hàng
+                </button>
+              </div>
+            )}
+            {status === 'confirmed' && (
+              <button
+                onClick={() => onStatusChange('shipping')}
+                className="inline-flex h-10 items-center justify-center bg-purple-600 text-white px-5 font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+              >
+                <Truck size={16} /> Bàn giao vận chuyển (ĐVVC)
+              </button>
+            )}
+            {status === 'shipping' && (
+              <button
+                onClick={() => onStatusChange('delivered')}
+                className="inline-flex h-10 items-center justify-center bg-emerald-600 text-white px-5 font-bold rounded-xl hover:bg-emerald-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+              >
+                <Package size={16} /> Giao hàng thành công
+              </button>
+            )}
+            {status === 'delivered' && (
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-xl">
+                <CheckCircle2 size={16} /> Đơn hàng đã hoàn thành
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const OrdersPage: React.FC = () => {
   const { path } = useRouter();
@@ -20,6 +178,7 @@ export const OrdersPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -177,26 +336,36 @@ export const OrdersPage: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-3 pr-4">
-                    <div className="relative inline-block">
-                      <select 
-                        value={order.status}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        className={`text-xs font-bold px-2.5 py-1 rounded-full border outline-none cursor-pointer pr-6 ${
-                          order.status === 'pending' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
-                          order.status === 'confirmed' ? 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
-                          order.status === 'shipping' ? 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
-                          order.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
-                          'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
-                        }`}
-                        
+                    <div className="relative inline-block text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
+                        }}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full border outline-none cursor-pointer transition-all hover:opacity-85 ${statusMap[order.status]?.color || 'text-neutral-600 bg-neutral-100'}`}
                       >
-                        <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
-                        <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
-                        <option value="shipping" className="text-purple-600 bg-white dark:bg-neutral-900">Đang giao</option>
-                        <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
-                        <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
-                      </select>
-                      
+                        {statusMap[order.status]?.label || order.status}
+                      </button>
+                      {activeDropdownId === order.id && (
+                        <>
+                          <div className="fixed inset-0 z-40 bg-transparent" onClick={(e) => { e.stopPropagation(); setActiveDropdownId(null); }} />
+                          <div className="absolute left-0 mt-1 w-32 bg-white dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-xl shadow-xl py-1 z-50 overflow-hidden">
+                            {Object.entries(statusMap).map(([statusKey, statusVal]) => (
+                              <button
+                                key={statusKey}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleStatusChange(order.id, statusKey);
+                                  setActiveDropdownId(null);
+                                }}
+                                className={`w-full text-left px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700/50 border-none cursor-pointer ${statusKey === order.status ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10' : 'text-neutral-600 dark:text-neutral-400 bg-transparent'}`}
+                              >
+                                {statusVal.label}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </td>
                   <td className="py-3 pr-4 cursor-pointer" onClick={() => setSelectedOrder(order)}><span className="text-sm text-neutral-500">{formatDate(order.createdAt)}</span></td>
@@ -243,7 +412,11 @@ export const OrdersPage: React.FC = () => {
               <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
                 <div>
                   <h3 className="text-xl font-black text-black dark:text-white mb-1">Chi tiết đơn hàng</h3>
-                  <p className="text-sm text-neutral-500">Mã đơn: <strong className="text-black dark:text-white font-mono">{selectedOrder.orderCode}</strong></p>
+                  <p className="text-sm text-neutral-500 font-medium">
+                    Mã đơn: <strong className="text-black dark:text-white font-mono">{selectedOrder.orderCode}</strong>
+                    <span className="mx-2 text-neutral-300 dark:text-neutral-700">|</span>
+                    Đặt ngày: <span className="font-semibold text-black dark:text-white">{formatDate(selectedOrder.createdAt)}</span>
+                  </p>
                 </div>
                 <button 
                   onClick={() => setSelectedOrder(null)}
@@ -253,40 +426,14 @@ export const OrdersPage: React.FC = () => {
                 </button>
               </div>
               
+              <AdminOrderStatusStepper 
+                status={selectedOrder.status} 
+                onStatusChange={(newStatus) => handleStatusChange(selectedOrder.id, newStatus)} 
+              />
+              
               <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
                 <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
                   <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-                    <div className="flex items-center justify-between mb-8 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl">
-                      <div>
-                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Trạng thái</p>
-                        <div className="relative inline-block">
-                          <select 
-                            value={selectedOrder.status}
-                            onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
-                            className={`text-sm font-bold px-3 py-1.5 rounded-xl border outline-none cursor-pointer pr-8 ${
-                              selectedOrder.status === 'pending' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' :
-                              selectedOrder.status === 'confirmed' ? 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20' :
-                              selectedOrder.status === 'shipping' ? 'text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20' :
-                              selectedOrder.status === 'delivered' ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' :
-                              'text-red-600 bg-red-50 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20'
-                            }`}
-                            
-                          >
-                            <option value="pending" className="text-amber-600 bg-white dark:bg-neutral-900">Chờ xử lý</option>
-                            <option value="confirmed" className="text-blue-600 bg-white dark:bg-neutral-900">Đã xác nhận</option>
-                            <option value="shipping" className="text-purple-600 bg-white dark:bg-neutral-900">Đang giao</option>
-                            <option value="delivered" className="text-emerald-600 bg-white dark:bg-neutral-900">Đã giao</option>
-                            <option value="cancelled" className="text-red-600 bg-white dark:bg-neutral-900">Đã hủy</option>
-                          </select>
-                          
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Ngày đặt</p>
-                        <p className="text-sm font-bold text-black dark:text-white">{formatDate(selectedOrder.createdAt)}</p>
-                      </div>
-                    </div>
-
                     <div className="mb-8">
                       <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2"><CreditCard size={16} className="text-neutral-400" /> Thông tin giao hàng</h4>
                       <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">

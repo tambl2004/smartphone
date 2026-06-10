@@ -15,6 +15,7 @@ import profileRoutes from './profile.routes.js';
 import chatRoutes from './chat.routes.js';
 import reviewRoutes from './review.routes.js';
 import questionRoutes from './question.routes.js';
+import momoRoutes from './momo.routes.js';
 import { authenticate, authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
@@ -39,5 +40,7 @@ router.use('/chat', authenticate, chatRoutes);
 router.use('/reviews', reviewRoutes);
 // Questions/Q&A (auth handled inside route file per-endpoint)
 router.use('/questions', questionRoutes);
+// MoMo integration routes
+router.use('/momo', momoRoutes);
 
 export default router;

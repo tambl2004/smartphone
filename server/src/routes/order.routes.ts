@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listOrders, createOrderController, getMyOrdersController, updateOrderStatusController, deleteOrderController } from '../controllers/order.controller.js';
+import { listOrders, createOrderController, getMyOrdersController, updateOrderStatusController, deleteOrderController, cancelMyOrderController } from '../controllers/order.controller.js';
 import { authorizeRoles } from '../middlewares/auth.js';
 
 const router = Router();
@@ -19,6 +19,7 @@ router.get('/', authorizeRoles('admin'), listOrders);
 
 router.post('/', createOrderController);
 router.get('/my-orders', getMyOrdersController);
+router.post('/:id/cancel', cancelMyOrderController);
 router.patch('/:id/status', authorizeRoles('admin'), updateOrderStatusController);
 router.delete('/:id', authorizeRoles('admin'), deleteOrderController);
 

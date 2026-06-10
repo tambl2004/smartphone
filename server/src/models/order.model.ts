@@ -14,7 +14,7 @@ export type OrderRecord = {
   discountAmount: string;
   promotionCode: string | null;
   totalAmount: string;
-  paymentMethod: 'cod' | 'bank_transfer' | 'credit_card' | 'wallet';
+  paymentMethod: 'cod' | 'bank_transfer' | 'credit_card' | 'wallet' | 'momo';
   status: 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
   createdAt: string;
   updatedAt: string;
@@ -97,6 +97,77 @@ export const updateOrderStatus = async (id: number, status: string) => {
   return (result as any).affectedRows > 0;
 };
 
+export const updateOrderStatusByCode = async (orderCode: string, status: string) => {
+  const [result] = await getDb().query(
+    'UPDATE orders SET status = ? WHERE order_code = ?',
+    [status, orderCode]
+  );
+  return (result as any).affectedRows > 0;
+};
+
+export const findOrderById = async (id: number) => {
+  const [rows] = await getDb().query(
+    `SELECT id, order_code AS orderCode, customer_id AS customerId, customer_name AS customerName, customer_email AS customerEmail, customer_phone AS customerPhone, shipping_address AS shippingAddress, subtotal_amount AS subtotalAmount, discount_amount AS discountAmount, promotion_code AS promotionCode, total_amount AS totalAmount, payment_method AS paymentMethod, status, created_at AS createdAt, updated_at AS updatedAt FROM orders WHERE id = ?`,
+    [id]
+  );
+  const orders = rows as any[];
+  if (orders.length === 0) return null;
+
+  const [itemRows] = await getDb().query(
+    `SELECT order_id, product_id AS productId, product_name AS productName, product_image_url AS productImage, quantity, unit_price AS unitPrice, line_total AS lineTotal
+     FROM order_items WHERE order_id = ?`,
+    [id]
+  );
+  orders[0].items = (itemRows as any[]).map((item) => ({
+    productId: item.productId,
+    productName: item.productName,
+    productImage: item.productImage,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    lineTotal: item.lineTotal,
+  }));
+
+  return orders[0] as OrderRecord & { items: any[] };
+};
+
+export const cancelOrder = async (id: number) => {
+  const db = getDb();
+  try {
+    await db.beginTransaction();
+
+    // Update status to cancelled
+    const [result] = await db.query(
+      "UPDATE orders SET status = 'cancelled' WHERE id = ?",
+      [id]
+    );
+
+    if ((result as any).affectedRows === 0) {
+      await db.rollback();
+      return false;
+    }
+
+    // Get items to restore stock
+    const [items] = await db.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+      [id]
+    );
+
+    for (const item of items as any[]) {
+      await db.query(
+        'UPDATE products SET stock = stock + ? WHERE id = ?',
+        [item.quantity, item.product_id]
+      );
+    }
+
+    await db.commit();
+    return true;
+  } catch (error) {
+    await db.rollback();
+    throw error;
+  }
+};
+
+
 export const deleteOrder = async (id: number) => {
   const db = getDb();
   try {
@@ -164,8 +235,11 @@ export const createOrder = async (
       await db.query(`UPDATE promotions SET used_count = used_count + 1 WHERE id = ?`, [orderData.promotionId]);
     }
 
-    // 4. Clear cart
-    await db.query(`DELETE FROM carts WHERE user_id = ?`, [userId]);
+    // 4. Clear only purchased items from cart
+    const purchasedProductIds = orderData.cartItems.map(item => item.productId);
+    if (purchasedProductIds.length > 0) {
+      await db.query(`DELETE FROM carts WHERE user_id = ? AND product_id IN (?)`, [userId, purchasedProductIds]);
+    }
 
     await db.commit();
     return orderId;

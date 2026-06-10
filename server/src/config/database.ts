@@ -78,6 +78,15 @@ export const connectDatabase = async () => {
 
   console.log('MySQL connected successfully');
 
+  try {
+    await connection.execute(`
+      ALTER TABLE orders MODIFY COLUMN payment_method ENUM('cod', 'bank_transfer', 'credit_card', 'wallet', 'momo') NOT NULL DEFAULT 'cod';
+    `);
+    console.log('Database migrated: payment_method enum updated to support momo');
+  } catch (error) {
+    console.error('Failed to run database migration:', error);
+  }
+
   return connection;
 };
 

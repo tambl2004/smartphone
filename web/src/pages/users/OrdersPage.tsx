@@ -17,6 +17,145 @@ const statusMap: Record<string, { label: string, color: string, icon: React.Reac
   cancelled: { label: 'Đã hủy', color: 'text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20', icon: <XCircle size={14} /> },
 };
 
+const formatDateTime = (dateString?: string | Date): string => {
+  if (!dateString) return '';
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${hours}:${minutes} ${day}-${month}-${year}`;
+};
+
+const OrderStatusStepper: React.FC<{ status: string; createdAt: string; updatedAt?: string }> = ({ status, createdAt, updatedAt }) => {
+  const steps = [
+    {
+      key: 'pending',
+      label: 'Đơn Hàng Đã Đặt',
+      icon: Clock,
+    },
+    {
+      key: 'confirmed',
+      label: 'Đã Xác Nhận',
+      icon: CheckCircle2,
+    },
+    {
+      key: 'shipping',
+      label: 'Chờ Lấy Hàng',
+      icon: Truck,
+    },
+    {
+      key: 'delivered',
+      label: 'Đang Giao / Hoàn Thành',
+      icon: Package,
+    },
+  ];
+
+  const getActiveIndex = (status: string) => {
+    switch (status) {
+      case 'pending': return 0;
+      case 'confirmed': return 1;
+      case 'shipping': return 2;
+      case 'delivered': return 3;
+      default: return -1;
+    }
+  };
+
+  const activeIndex = getActiveIndex(status);
+
+  if (status === 'cancelled') {
+    return (
+      <div className="w-full bg-neutral-50 dark:bg-neutral-900/30 border-b border-neutral-100 dark:border-neutral-800 p-6">
+        <div className="max-w-4xl mx-auto flex items-center gap-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-5">
+          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 flex-shrink-0">
+            <XCircle size={24} />
+          </div>
+          <div>
+            <h5 className="font-bold text-red-600 dark:text-red-400 text-base">Đơn hàng đã hủy</h5>
+            <p className="text-xs text-red-500/80 dark:text-red-400/70 mt-0.5">
+              Đơn hàng này đã bị hủy vào lúc {updatedAt ? formatDateTime(updatedAt) : formatDateTime(createdAt)}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full bg-neutral-50 dark:bg-neutral-900/30 border-b border-neutral-100 dark:border-neutral-800 p-6 md:p-8">
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 relative">
+        {/* Progress Line for Desktop */}
+        <div className="hidden md:block absolute top-[24px] left-[50px] right-[50px] h-[3px] bg-neutral-200 dark:bg-neutral-800 -z-0">
+          <div 
+            className="h-full bg-emerald-500 transition-all duration-500 ease-in-out"
+            style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
+          />
+        </div>
+
+        {steps.map((step, index) => {
+          const StepIcon = step.icon;
+          const isCompleted = index <= activeIndex;
+          const isActive = index === activeIndex;
+
+          // Compute sublabels with actual database timestamps
+          let sublabel = '';
+          if (step.key === 'pending') {
+            sublabel = formatDateTime(createdAt);
+          } else if (step.key === 'confirmed' && (status === 'confirmed' || status === 'shipping' || status === 'delivered')) {
+            sublabel = status === 'confirmed' && updatedAt ? formatDateTime(updatedAt) : 'Đã xác nhận thanh toán';
+          } else if (step.key === 'shipping' && (status === 'shipping' || status === 'delivered')) {
+            sublabel = status === 'shipping' && updatedAt ? formatDateTime(updatedAt) : 'Đã giao cho ĐVVC';
+          } else if (step.key === 'delivered' && status === 'delivered') {
+            sublabel = updatedAt ? formatDateTime(updatedAt) : 'Giao thành công';
+          }
+
+          return (
+            <div key={step.key} className="flex md:flex-col items-center gap-4 md:gap-2 flex-1 w-full relative z-10">
+              {/* Vertical line for mobile */}
+              {index < steps.length - 1 && (
+                <div className="md:hidden absolute left-[22px] top-[44px] bottom-[-24px] w-[3px] bg-neutral-200 dark:bg-neutral-800 -z-1">
+                  <div 
+                    className="w-full bg-emerald-500 transition-all duration-500 ease-in-out"
+                    style={{ height: isCompleted && index < activeIndex ? '100%' : '0%' }}
+                  />
+                </div>
+              )}
+
+              {/* Circle Icon */}
+              <div 
+                className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${
+                  isCompleted 
+                    ? 'bg-emerald-500 border-white dark:border-neutral-900 text-white shadow-lg shadow-emerald-500/20' 
+                    : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-400'
+                } ${isActive ? 'scale-110 ring-4 ring-emerald-500/20' : ''}`}
+              >
+                <StepIcon size={18} className={isActive ? 'animate-pulse' : ''} />
+              </div>
+
+              {/* Labels */}
+              <div className="flex flex-col md:items-center text-left md:text-center min-w-0">
+                <span 
+                  className={`text-sm font-bold transition-colors duration-300 ${
+                    isCompleted ? 'text-black dark:text-white' : 'text-neutral-400'
+                  }`}
+                >
+                  {step.label}
+                </span>
+                {sublabel && (
+                  <span className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-0.5 max-w-[150px]">
+                    {sublabel}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /** Interactive star rating component */
 const StarRating: React.FC<{
   value: number;
@@ -63,6 +202,68 @@ export const UserOrdersPage: React.FC = () => {
   const [reviewComments, setReviewComments] = useState<Record<number, string>>({});
   const [submittingReview, setSubmittingReview] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [retryingPaymentId, setRetryingPaymentId] = useState<number | null>(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+
+  const handleCancelOrder = async (orderId: number) => {
+    const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
+    if (!confirmCancel) return;
+
+    const auth = getAuth();
+    if (!auth?.token) {
+      toast.error('Vui lòng đăng nhập lại để thực hiện');
+      return;
+    }
+
+    setCancellingOrderId(orderId);
+    try {
+      const res = await orderService.cancelOrder(orderId, auth.token);
+      if (res.success) {
+        toast.success('Hủy đơn hàng thành công');
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId ? { ...order, status: 'cancelled' } : order
+          )
+        );
+        setSelectedOrder(prev => prev && prev.id === orderId ? { ...prev, status: 'cancelled' } : prev);
+      } else {
+        toast.error(res.message || 'Không thể hủy đơn hàng');
+      }
+    } catch {
+      toast.error('Lỗi kết nối khi hủy đơn hàng');
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
+  const handleOrderRetryPayment = async (order: OrderRecord) => {
+    const auth = getAuth();
+    if (!auth?.token) {
+      toast.error('Vui lòng đăng nhập lại để thanh toán');
+      return;
+    }
+    setRetryingPaymentId(order.id);
+    const toastId = toast.loading('Đang tạo liên kết thanh toán MoMo...');
+    try {
+      const payRes = await orderService.createMomoPayment(
+        order.orderCode,
+        Number(order.totalAmount),
+        auth.token
+      );
+      toast.dismiss(toastId);
+      if (payRes.success && payRes.data?.payUrl) {
+        toast.success('Đang chuyển hướng sang cổng thanh toán MoMo...');
+        window.location.replace(payRes.data.payUrl);
+      } else {
+        toast.error(payRes.message || 'Lỗi khi tạo yêu cầu thanh toán MoMo');
+      }
+    } catch {
+      toast.dismiss(toastId);
+      toast.error('Lỗi kết nối khi kết nối cổng thanh toán');
+    } finally {
+      setRetryingPaymentId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -200,12 +401,38 @@ export const UserOrdersPage: React.FC = () => {
                   <div className="text-sm text-neutral-500 flex items-center gap-2">
                     <Package size={16} /> {order.items?.length || 0} sản phẩm
                   </div>
-                  <button 
-                    onClick={() => openOrderDetail(order)}
-                    className="text-sm font-bold text-black dark:text-white hover:opacity-70 transition-opacity"
-                  >
-                    Xem chi tiết
-                  </button>
+                  <div className="flex items-center gap-4">
+                    {order.status === 'pending' && (
+                      <button
+                        disabled={cancellingOrderId !== null}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleCancelOrder(order.id);
+                        }}
+                        className="text-sm font-bold text-red-500 hover:opacity-75 transition-opacity disabled:opacity-50"
+                      >
+                        {cancellingOrderId === order.id ? 'Đang hủy...' : 'Hủy đơn'}
+                      </button>
+                    )}
+                    {order.status === 'pending' && order.paymentMethod === 'momo' && (
+                      <button
+                        disabled={retryingPaymentId !== null}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleOrderRetryPayment(order);
+                        }}
+                        className="text-sm font-bold text-[#A50064] hover:opacity-75 transition-opacity disabled:opacity-50"
+                      >
+                        {retryingPaymentId === order.id ? 'Đang xử lý...' : 'Thanh toán lại'}
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => openOrderDetail(order)}
+                      className="text-sm font-bold text-black dark:text-white hover:opacity-70 transition-opacity"
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -244,23 +471,15 @@ export const UserOrdersPage: React.FC = () => {
               </button>
             </div>
             
+            <OrderStatusStepper 
+              status={selectedOrder.status} 
+              createdAt={selectedOrder.createdAt} 
+              updatedAt={selectedOrder.updatedAt} 
+            />
+            
             <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
               <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
                 <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-                  <div className="flex items-center justify-between mb-8 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl">
-                    <div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Trạng thái</p>
-                      <span className={`inline-flex items-center gap-1.5 text-sm font-bold ${statusMap[selectedOrder.status]?.color?.split(' ')[0] || 'text-neutral-600'}`}>
-                        {statusMap[selectedOrder.status]?.icon}
-                        {statusMap[selectedOrder.status]?.label || selectedOrder.status}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-1">Ngày đặt</p>
-                      <p className="text-sm font-bold text-black dark:text-white">{formatDate(selectedOrder.createdAt)}</p>
-                    </div>
-                  </div>
-
                   <div className="mb-8">
                     <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Thông tin giao hàng</h4>
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">
@@ -383,6 +602,24 @@ export const UserOrdersPage: React.FC = () => {
               </button>
               
               <div className="flex items-center gap-3">
+                {selectedOrder.status === 'pending' && (
+                  <button
+                    disabled={cancellingOrderId !== null}
+                    onClick={() => void handleCancelOrder(selectedOrder.id)}
+                    className="inline-flex h-12 items-center justify-center bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 px-6 font-bold rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors text-sm gap-2 disabled:opacity-50"
+                  >
+                    {cancellingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy đơn hàng'}
+                  </button>
+                )}
+                {selectedOrder.status === 'pending' && selectedOrder.paymentMethod === 'momo' && (
+                  <button
+                    disabled={retryingPaymentId !== null}
+                    onClick={() => void handleOrderRetryPayment(selectedOrder)}
+                    className="inline-flex h-12 items-center justify-center bg-[#A50064] text-white px-6 font-bold rounded-xl hover:opacity-95 transition-opacity text-sm gap-2 disabled:opacity-50"
+                  >
+                    {retryingPaymentId === selectedOrder.id ? 'Đang xử lý...' : 'Thanh toán lại qua MoMo'}
+                  </button>
+                )}
                 {/* Review button - only for delivered orders */}
                 {selectedOrder.status === 'delivered' && !loadingReviews && (
                   <>

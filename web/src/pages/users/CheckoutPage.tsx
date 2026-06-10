@@ -23,7 +23,25 @@ const getProductImage = (item: CartItem): string => {
 const generateOrderCode = () => 'DH' + Math.floor(100000 + Math.random() * 900000);
 
 export const CheckoutPage: React.FC = () => {
-  const { items, cartTotal, clearCart } = useCart();
+  const { items: allItems, syncFromServer } = useCart();
+  const [selectedIds] = useState<number[]>(() => {
+    const stored = sessionStorage.getItem('checkout_selected_ids');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const items = selectedIds.length > 0 
+    ? allItems.filter(item => selectedIds.includes(item.product.id))
+    : allItems;
+
+  const cartTotal = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'momo'>('cod');
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
@@ -34,6 +52,7 @@ export const CheckoutPage: React.FC = () => {
   const [orderCode, setOrderCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -138,18 +157,41 @@ export const CheckoutPage: React.FC = () => {
       }))
     };
 
+    setSubmitting(true);
     try {
       const res = await orderService.placeOrder(payload, auth.token);
       if (res.success) {
         setOrderCode(code);
-        setIsOrdered(true);
-        clearCart();
-        toast.success('Đặt hàng thành công!');
+        if (paymentMethod === 'momo') {
+          toast.success('Đang tạo liên kết thanh toán MoMo...');
+          const payRes = await orderService.createMomoPayment(code, finalTotal, auth.token);
+          if (payRes.success && payRes.data?.payUrl) {
+            void syncFromServer(true);
+            sessionStorage.removeItem('checkout_selected_ids');
+            toast.success('Đang chuyển hướng sang cổng thanh toán MoMo...');
+            window.location.replace(payRes.data.payUrl);
+            return;
+          } else {
+            toast.error(payRes.message || 'Lỗi khi tạo yêu cầu thanh toán MoMo');
+            void syncFromServer(true);
+            sessionStorage.removeItem('checkout_selected_ids');
+            const errMsg = encodeURIComponent(payRes.message || 'Lỗi khi tạo yêu cầu thanh toán MoMo');
+            window.location.replace(`/payment-result?resultCode=99&message=${errMsg}&orderId=${code}&amount=${finalTotal}&signature=invalid`);
+            return;
+          }
+        } else {
+          setIsOrdered(true);
+          void syncFromServer(true);
+          sessionStorage.removeItem('checkout_selected_ids');
+          toast.success('Đặt hàng thành công!');
+        }
       } else {
         toast.error(res.message || 'Có lỗi xảy ra khi đặt hàng');
       }
     } catch {
       toast.error('Lỗi kết nối khi đặt hàng');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -422,10 +464,14 @@ export const CheckoutPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={!selectedAddress}
+                disabled={!selectedAddress || submitting}
                 className="w-full inline-flex h-14 items-center justify-center gap-2 bg-black text-white dark:bg-white dark:text-black font-bold rounded-xl hover:opacity-85 transition-opacity text-sm tracking-wide shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Sparkles size={18} /> Đặt hàng ngay
+                {submitting ? 'Đang xử lý...' : (
+                  <>
+                    <Sparkles size={18} /> Đặt hàng ngay
+                  </>
+                )}
               </button>
             </div>
           </motion.div>

@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { getOrders, placeOrder, getMyOrders, updateOrderStatus, deleteOrder } from '../services/order.service.js';
+import { getOrders, placeOrder, getMyOrders, updateOrderStatus, deleteOrder, cancelMyOrder } from '../services/order.service.js';
 import { sendSuccess } from '../utils/api-response.js';
 import { parseListQuery } from '../utils/pagination.js';
 
@@ -39,3 +39,18 @@ export const deleteOrderController = async (req: Request, res: Response) => {
   }
   return sendSuccess(res, 200, 'Order deleted successfully', null);
 };
+
+export const cancelMyOrderController = async (req: Request, res: Response) => {
+  const userId = (req as any).user.id;
+  const { id } = req.params;
+  try {
+    const success = await cancelMyOrder(Number(id), userId);
+    if (!success) {
+      return res.status(400).json({ success: false, message: 'Could not cancel order' });
+    }
+    return sendSuccess(res, 200, 'Order cancelled successfully', null);
+  } catch (error: any) {
+    return res.status(400).json({ success: false, message: error.message || 'Error cancelling order' });
+  }
+};
+
