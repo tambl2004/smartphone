@@ -33,8 +33,8 @@ export const Footer = () => {
           <div>
             <h4 className="font-bold mb-6 text-[11px] uppercase tracking-widest text-black dark:text-white">Pháp lý</h4>
             <ul className="space-y-4 text-sm text-neutral-500 font-medium">
-              <li><a href="#" className="hover:text-black dark:hover:text-white transition-colors">Chính sách bảo mật</a></li>
-              <li><a href="#" className="hover:text-black dark:hover:text-white transition-colors">Điều khoản dịch vụ</a></li>
+              <li><Link to="/privacy-policy" className="hover:text-black dark:hover:text-white transition-colors">Chính sách bảo mật</Link></li>
+              <li><Link to="/terms-of-service" className="hover:text-black dark:hover:text-white transition-colors">Điều khoản dịch vụ</Link></li>
             </ul>
           </div>
         </div>
