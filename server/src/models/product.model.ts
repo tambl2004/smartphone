@@ -16,6 +16,7 @@ export type ProductRecord = {
   rating: string;
   reviewsCount: number;
   stock: number;
+  sold: number;
   description: string | null;
   featured: number;
   status: 'active' | 'draft' | 'out_of_stock' | 'hidden';
@@ -50,6 +51,7 @@ const BASE_SELECT = `
   p.brand AS brand,
   p.price, p.original_price AS originalPrice, p.discount_percent AS discountPercent,
   p.rating, p.reviews_count AS reviewsCount, p.stock,
+  (SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi INNER JOIN orders o ON o.id = oi.order_id WHERE oi.product_id = p.id AND o.status = 'delivered') AS sold,
   p.description, p.additional_specs AS additionalSpecs, p.featured, p.status
 `;
 
@@ -88,6 +90,7 @@ async function attachImagesAndSpecs(products: RawProductRow[]): Promise<ProductR
 
   return products.map((p) => ({
     ...p,
+    sold: Number((p as any).sold || 0),
     images: imgMap.get(p.id) ?? [],
     specs: specMap.get(p.id) ?? [],
   }));

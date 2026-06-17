@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Search, Send, Phone, Video, Star, Archive,
+  Search, Send, Phone,
   MoreVertical, ChevronDown, Mail, MapPin, Hash,
   Smile, Paperclip, Loader2, Trash2, CornerUpLeft, X
 } from 'lucide-react';
@@ -94,6 +94,7 @@ export const ChatPage: React.FC = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showMobileList, setShowMobileList] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set()); // userId đang nhập
   const adminTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -571,9 +572,6 @@ export const ChatPage: React.FC = () => {
                 </button>
                 {[
                   { Icon: Phone, color: 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10' },
-                  { Icon: Video, color: 'text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-500/10' },
-                  { Icon: Star, color: 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10' },
-                  { Icon: Archive, color: 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10' },
                   { Icon: MoreVertical, color: 'text-neutral-500 hover:bg-neutral-100 dark:hover:bg-white/[0.08]' },
                 ].map(({ Icon, color }, i) => (
                   <button key={i} onClick={i === 4 ? () => setShowInfo(!showInfo) : undefined}
@@ -658,7 +656,7 @@ export const ChatPage: React.FC = () => {
                           <div className="rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 max-w-xs shadow-sm bg-neutral-100 dark:bg-neutral-800">
                             <img src={msg.text.startsWith('http') ? msg.text : `${API.replace('/api', '')}${msg.text}`}
                               alt="Gửi từ chat" className="w-full max-h-60 object-cover cursor-zoom-in hover:scale-[1.02] transition-transform duration-200"
-                              onClick={() => window.open(msg.text.startsWith('http') ? msg.text : `${API.replace('/api', '')}${msg.text}`, '_blank')} />
+                              onClick={() => setSelectedImage(msg.text.startsWith('http') ? msg.text : `${API.replace('/api', '')}${msg.text}`)} />
                           </div>
                         ) : (
                           <div className={`px-4 py-2.5 text-sm leading-relaxed ${msg.sender === 'admin' ? 'bg-indigo-600 text-white rounded-2xl rounded-br-md' : 'bg-white dark:bg-[#1c2333] text-neutral-800 dark:text-neutral-200 rounded-2xl rounded-bl-md shadow-sm border border-neutral-100 dark:border-neutral-700/50'}`}>
@@ -870,6 +868,40 @@ export const ChatPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors border-none outline-none cursor-pointer z-10"
+              >
+                <X size={20} color="#ffffff" className="text-white" />
+              </button>
+              <img
+                src={selectedImage}
+                alt="Phóng to"
+                className="w-full h-full object-contain rounded-lg shadow-2xl"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

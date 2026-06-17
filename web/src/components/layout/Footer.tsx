@@ -1,4 +1,5 @@
 import { Link } from '@routes/router';
+import logoImg from '../../assets/logo_dt.png';
 
 export const Footer = () => {
   return (
@@ -6,7 +7,9 @@ export const Footer = () => {
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           <div className="col-span-1 md:col-span-1">
-            <h3 className="text-xl font-bold tracking-tighter mb-4 text-black dark:text-white">NEXPHONE</h3>
+            <Link to="/" className="block mb-4 hover:opacity-80 transition-opacity inline-block">
+              <img src={logoImg} alt="Logo" className="h-10 w-auto object-contain" />
+            </Link>
             <p className="text-sm text-neutral-500 leading-relaxed max-w-xs">
               Điểm đến hàng đầu cho các thiết bị flagship. Trải nghiệm tương lai của công nghệ di động ngay hôm nay.
             </p>

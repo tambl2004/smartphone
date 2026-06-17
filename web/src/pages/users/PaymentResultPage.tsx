@@ -58,17 +58,18 @@ export const PaymentResultPage: React.FC = () => {
 
       try {
         const res = await orderService.verifyMomoPayment(paramsObj, auth.token);
+        const cleanOrderId = (res.data?.orderId || paramsObj.orderId || '').split('_')[0];
         if (res.success && res.data?.isSuccess) {
           setStatus('success');
           setOrderDetails({
-            orderId: res.data.orderId,
+            orderId: cleanOrderId,
             amount: Number(res.data.amount),
             message: res.data.message || 'Thanh toán thành công'
           });
         } else {
           setStatus('failed');
           setOrderDetails({
-            orderId: paramsObj.orderId,
+            orderId: cleanOrderId,
             amount: Number(paramsObj.amount || 0),
             message: paramsObj.message || 'Giao dịch không thành công'
           });
@@ -77,7 +78,7 @@ export const PaymentResultPage: React.FC = () => {
         console.error('Error verifying payment:', error);
         setStatus('failed');
         setOrderDetails({
-          orderId: paramsObj.orderId || '',
+          orderId: (paramsObj.orderId || '').split('_')[0],
           amount: Number(paramsObj.amount || 0),
           message: paramsObj.message || 'Lỗi kết nối cổng thanh toán'
         });

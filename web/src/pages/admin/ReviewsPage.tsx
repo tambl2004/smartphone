@@ -140,7 +140,7 @@ export const ReviewsPage: React.FC = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[900px]">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-white/[0.04]">
                     <th className="text-left text-xs font-semibold uppercase tracking-wider opacity-50 px-6 py-4">Khách hàng</th>

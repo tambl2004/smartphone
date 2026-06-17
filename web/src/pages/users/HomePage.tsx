@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ===== 1. HERO BANNER ===== */}
-      <section className="relative min-h-[600px] h-[80vh] md:h-screen w-full bg-neutral-100 dark:bg-neutral-900 overflow-hidden flex items-center">
+      <section className="relative min-h-screen lg:h-screen w-full bg-neutral-100 dark:bg-neutral-900 overflow-hidden flex items-center py-24 lg:py-0">
         <div className="max-w-[1400px] w-full mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
           {/* Left Column: Text */}
           <motion.div
@@ -111,7 +111,7 @@ export const HomePage: React.FC = () => {
           </motion.div>
 
           {/* Right Column: 3D Container */}
-          <div className="hidden md:block w-full h-[500px] md:h-[700px] lg:h-[80vh] relative overflow-hidden bg-transparent">
+          <div className="w-full h-[320px] sm:h-[400px] md:h-[700px] lg:h-[80vh] relative overflow-hidden bg-transparent mt-4 lg:mt-0">
             <Suspense fallback={
               <div className="w-full h-full flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
@@ -161,7 +161,7 @@ export const HomePage: React.FC = () => {
             <div className="w-16 h-1 bg-black dark:bg-white rounded-full"></div>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
             {categories.map((cat, idx) => {
               // Map category slug to professional Lucide icons
               const getIcon = (slug: string) => {

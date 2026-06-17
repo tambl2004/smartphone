@@ -380,15 +380,15 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-end gap-4 mb-8">
-                <span className="text-4xl font-bold text-black dark:text-white leading-none">{formatPrice(product.price)}</span>
+              <div className="flex flex-wrap items-end gap-3 mb-8">
+                <span className="text-3xl sm:text-4xl font-bold text-black dark:text-white leading-none">{formatPrice(product.price)}</span>
                 {product.originalPrice && product.originalPrice > product.price && (
-                  <>
-                    <span className="text-xl text-neutral-400 line-through leading-none mb-0.5">{formatPrice(product.originalPrice)}</span>
-                    <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold px-2 py-1 rounded-sm shadow-sm tracking-wide mb-1.5">
+                  <div className="flex items-center gap-3 pb-0.5">
+                    <span className="text-lg sm:text-xl text-neutral-400 line-through leading-none">{formatPrice(product.originalPrice)}</span>
+                    <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-bold px-2 py-1 rounded-sm shadow-sm tracking-wide">
                       Tiết kiệm {discount}%
                     </span>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -397,7 +397,7 @@ export const ProductDetailPage: React.FC = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-12 pb-12 border-b border-neutral-200 dark:border-neutral-800">
-                <div className="flex items-center border border-neutral-300 dark:border-neutral-700 rounded-md h-14 bg-white dark:bg-neutral-900 w-full sm:w-36 justify-between px-4">
+                <div className="flex items-center border border-neutral-300 dark:border-neutral-700 rounded-md h-14 bg-white dark:bg-neutral-900 w-full sm:w-36 justify-between px-4 flex-shrink-0">
                   <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="text-neutral-400 hover:text-black dark:hover:text-white transition-colors">
                     <Minus size={20} />
                   </button>
@@ -407,23 +407,25 @@ export const ProductDetailPage: React.FC = () => {
                   </button>
                 </div>
 
-                <Button
-                  size="lg"
-                  className="flex-1 text-lg"
-                  onClick={() => addToCart(product, quantity)}
-                  disabled={product.stock <= 0}
-                >
-                  <ShoppingCart size={20} className="mr-3" /> Thêm vào giỏ hàng
-                </Button>
+                <div className="flex gap-4 w-full">
+                  <Button
+                    size="lg"
+                    className="flex-1 text-base sm:text-lg px-2 sm:px-4"
+                    onClick={() => addToCart(product, quantity)}
+                    disabled={product.stock <= 0}
+                  >
+                    <ShoppingCart size={20} className="mr-2 sm:mr-3 flex-shrink-0" /> <span className="truncate">Thêm vào giỏ hàng</span>
+                  </Button>
 
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className={`w-14 sm:w-14 px-0 border-neutral-300 dark:border-neutral-700 ${isWish ? 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900' : ''}`}
-                  onClick={() => toggleWishlist(product)}
-                >
-                  <Heart size={20} className={isWish ? 'fill-current' : ''} />
-                </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className={`w-14 flex-shrink-0 px-0 border-neutral-300 dark:border-neutral-700 ${isWish ? 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900' : ''}`}
+                    onClick={() => toggleWishlist(product)}
+                  >
+                    <Heart size={20} className={isWish ? 'fill-current' : ''} />
+                  </Button>
+                </div>
               </div>
 
               {/* Guarantees */}
@@ -595,12 +597,12 @@ export const ProductDetailPage: React.FC = () => {
                               <div key={reply.id} className="relative flex items-start gap-3">
                                 {/* Vertical tree line segments */}
                                 {replyIdx === 0 ? (
-                                  question.replies.length === 1 ? (
+                                  question.replies!.length === 1 ? (
                                     <div className="absolute left-[-24px] top-[-32px] w-px h-[48px] bg-neutral-300 dark:bg-neutral-700" />
                                   ) : (
                                     <div className="absolute left-[-24px] top-[-32px] bottom-0 w-px bg-neutral-300 dark:bg-neutral-700" />
                                   )
-                                ) : replyIdx === question.replies.length - 1 ? (
+                                ) : replyIdx === question.replies!.length - 1 ? (
                                   <div className="absolute left-[-24px] top-[-16px] h-[32px] w-px bg-neutral-300 dark:bg-neutral-700" />
                                 ) : (
                                   <div className="absolute left-[-24px] top-[-16px] bottom-0 w-px bg-neutral-300 dark:bg-neutral-700" />

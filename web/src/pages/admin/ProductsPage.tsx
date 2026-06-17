@@ -234,14 +234,14 @@ export const ProductsPage: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight">Quản lý sản phẩm</h1>
           <p className="text-sm opacity-40 mt-1">{loading ? 'Đang tải...' : `${products.length} sản phẩm`}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setModalType('import')} className="h-9 px-3 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all outline-none">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => setModalType('import')} className="h-9 px-3 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all outline-none whitespace-nowrap">
             <Upload size={14} /> Import
           </button>
-          <button onClick={() => setModalType('export')} className="h-9 px-3 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all outline-none">
+          <button onClick={() => setModalType('export')} className="h-9 px-3 flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm opacity-60 hover:opacity-100 hover:bg-white/[0.08] transition-all outline-none whitespace-nowrap">
             <Download size={14} /> Export
           </button>
-          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
+          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none whitespace-nowrap">
             <Plus size={14} /> Thêm sản phẩm
           </button>
         </div>
@@ -266,7 +266,7 @@ export const ProductsPage: React.FC = () => {
 
       <ChartCard title={`Hiển thị ${filteredProducts.length} sản phẩm`}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-white/[0.06]">
                 <th className="text-left pb-3 pr-3 w-10"><input type="checkbox" className="w-4 h-4 rounded accent-indigo-600" onChange={() => {}} /></th>
@@ -297,7 +297,7 @@ export const ProductsPage: React.FC = () => {
                     )}
                   </td>
                   <td className="py-3 pr-4"><span className={`text-sm font-medium ${product.stock <= 10 ? 'text-red-400' : 'opacity-70'}`}>{product.stock}</span></td>
-                  <td className="py-3 pr-4"><span className="text-sm opacity-50">0</span></td>
+                  <td className="py-3 pr-4"><span className="text-sm opacity-50">{product.sold}</span></td>
                   <td className="py-3 pr-4"><div className="flex items-center gap-1"><Star size={12} className="text-amber-400 fill-amber-400" /><span className="text-sm opacity-60">{product.rating}</span></div></td>
                   <td className="py-3 pr-4"><StatusBadge status={product.status === 'out_of_stock' ? 'outOfStock' : product.status} /></td>
                   <td className="py-3">
@@ -494,7 +494,7 @@ export const ProductsPage: React.FC = () => {
                     { label: 'Giá bán', value: formatPrice(currentProduct.price), highlight: true },
                     { label: 'Giá gốc', value: currentProduct.originalPrice ? formatPrice(currentProduct.originalPrice) : 'Không có' },
                     { label: 'Tồn kho', value: `${currentProduct.stock} sản phẩm` },
-                    { label: 'Đã bán', value: `0 sản phẩm` },
+                    { label: 'Đã bán', value: `${currentProduct.sold} sản phẩm` },
                     { label: 'Đánh giá', value: `${currentProduct.rating} ★` },
                     { label: 'Ngày tạo', value: currentProduct.createdAt ? new Date(currentProduct.createdAt).toLocaleDateString('vi-VN') : '-' },
                   ].map(item => (

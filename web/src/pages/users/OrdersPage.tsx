@@ -458,7 +458,7 @@ export const UserOrdersPage: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
           >
-            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
+            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 z-10 flex-shrink-0">
               <div>
                 <h3 className="text-xl font-black text-black dark:text-white mb-1">Chi tiết đơn hàng</h3>
                 <p className="text-sm text-neutral-500">Mã đơn: <strong className="text-black dark:text-white">{selectedOrder.orderCode}</strong></p>
@@ -471,15 +471,16 @@ export const UserOrdersPage: React.FC = () => {
               </button>
             </div>
             
-            <OrderStatusStepper 
-              status={selectedOrder.status} 
-              createdAt={selectedOrder.createdAt} 
-              updatedAt={selectedOrder.updatedAt} 
-            />
-            
-            <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+            <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+              <OrderStatusStepper 
+                status={selectedOrder.status} 
+                createdAt={selectedOrder.createdAt} 
+                updatedAt={selectedOrder.updatedAt} 
+              />
+              
+              <div className="flex flex-col lg:flex-row lg:overflow-hidden lg:flex-1 min-h-0">
               <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-6 lg:overflow-y-auto lg:custom-scrollbar flex-1">
                   <div className="mb-8">
                     <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Thông tin giao hàng</h4>
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">
@@ -505,7 +506,7 @@ export const UserOrdersPage: React.FC = () => {
               </div>
               
               <div className="w-full lg:w-1/2 flex flex-col bg-neutral-50/50 dark:bg-neutral-800/20">
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-6 lg:overflow-y-auto lg:custom-scrollbar flex-1">
                   <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4">Sản phẩm ({selectedOrder.items?.length || 0})</h4>
                   <div className="space-y-4">
                     {selectedOrder.items?.map((item, i) => {
@@ -592,8 +593,9 @@ export const UserOrdersPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
 
-            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center flex-wrap gap-3">
+            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center flex-wrap gap-3 border-t border-neutral-100 dark:border-neutral-800 flex-shrink-0">
               <button 
                 onClick={() => setSelectedOrder(null)}
                 className="inline-flex h-12 items-center justify-center bg-neutral-100 text-black dark:bg-neutral-800 dark:text-white px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"

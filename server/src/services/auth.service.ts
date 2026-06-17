@@ -191,26 +191,49 @@ export const resetPassword = async ({
   return { success: true, message: 'Đặt lại mật khẩu thành công' };
 };
 
-export const verifyGoogleToken = async (idToken: string) => {
-  const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
-  const client = new OAuth2Client(googleClientId);
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: googleClientId,
-  });
-  const payload = ticket.getPayload();
-  if (!payload) {
-    throw new Error('Xác thực Google thất bại');
+export const verifyGoogleToken = async (token: string) => {
+  // Check if token is a JWT (ID Token)
+  if (token.includes('.') && token.split('.').length === 3) {
+    const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
+    const client = new OAuth2Client(googleClientId);
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: googleClientId,
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw new Error('Xác thực Google thất bại');
+    }
+    return payload;
+  } else {
+    // Treat as Access Token and request Google user info API
+    const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) {
+      throw new Error('Xác thực Google Access Token thất bại');
+    }
+    const payload = (await response.json()) as {
+      email?: string;
+      name?: string;
+      picture?: string;
+      sub?: string;
+    };
+    return {
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      sub: payload.sub,
+    };
   }
-  return payload;
 };
 
 export const loginGoogleUser = async (idToken: string): Promise<LoginResponseData> => {
   const payload = await verifyGoogleToken(idToken);
   const { email, name, picture, sub: googleId } = payload;
 
-  if (!email) {
-    throw new Error('Email Google không hợp lệ');
+  if (!email || !googleId) {
+    throw new Error('Thông tin Google không hợp lệ hoặc thiếu thông tin định danh');
   }
 
   let user = await findUserByGoogleId(googleId);

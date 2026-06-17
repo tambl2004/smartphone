@@ -26,11 +26,14 @@ router.post('/payment', authenticate, async (req: Request, res: Response): Promi
     }
 
     const { partnerCode, accessKey, secretKey, momoEndpoint, redirectUrl, ipnUrl } = getMomoConfig();
-    const requestId = orderId; // Use orderId as requestId
+    
+    // Generate a unique orderId for MoMo to prevent duplicates error (MoMo Sandbox restriction)
+    const momoOrderId = `${orderId}_${Date.now()}`;
+    const requestId = momoOrderId; 
     const requestType = 'payWithATM';
     const extraData = '';
 
-    const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+    const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${momoOrderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
 
     const signature = crypto
       .createHmac('sha256', secretKey)
@@ -44,7 +47,7 @@ router.post('/payment', authenticate, async (req: Request, res: Response): Promi
       storeId: 'NexPhoneStore',
       requestId,
       amount: Number(amount),
-      orderId,
+      orderId: momoOrderId,
       orderInfo,
       redirectUrl,
       ipnUrl,
@@ -94,7 +97,7 @@ router.post('/callback', async (req: Request, res: Response): Promise<any> => {
     const paramResultCode = resultCode !== undefined ? String(resultCode) : '';
     const paramTransId = transId || '';
 
-    // Verify signature
+    // Verify signature using the original MoMo orderId
     const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${paramExtraData}&message=${paramMessage}&orderId=${orderId}&orderInfo=${paramOrderInfo}&orderType=${paramOrderType}&partnerCode=${respPartnerCode}&payType=${paramPayType}&requestId=${requestId}&responseTime=${paramResponseTime}&resultCode=${paramResultCode}&transId=${paramTransId}`;
 
     const computedSignature = crypto
@@ -109,11 +112,14 @@ router.post('/callback', async (req: Request, res: Response): Promise<any> => {
       return res.status(400).json({ success: false, message: 'Invalid signature' });
     }
 
+    // Extract real orderCode
+    const realOrderCode = orderId.split('_')[0];
+
     if (String(resultCode) === '0') {
-      console.log(`MoMo Payment Success for Order ${orderId}`);
-      await updateOrderStatusByCode(orderId, 'confirmed');
+      console.log(`MoMo Payment Success for Order ${realOrderCode}`);
+      await updateOrderStatusByCode(realOrderCode, 'confirmed');
     } else {
-      console.warn(`MoMo Payment Failed/Cancelled for Order ${orderId}: resultCode=${resultCode}`);
+      console.warn(`MoMo Payment Failed/Cancelled for Order ${realOrderCode}: resultCode=${resultCode}`);
     }
 
     return res.status(204).send();
@@ -156,7 +162,7 @@ router.post('/verify', authenticate, async (req: Request, res: Response): Promis
     const paramResultCode = resultCode !== undefined ? String(resultCode) : '';
     const paramTransId = transId || '';
 
-    // Verify signature
+    // Verify signature using the original MoMo orderId
     const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${paramExtraData}&message=${paramMessage}&orderId=${orderId}&orderInfo=${paramOrderInfo}&orderType=${paramOrderType}&partnerCode=${respPartnerCode}&payType=${paramPayType}&requestId=${requestId}&responseTime=${paramResponseTime}&resultCode=${paramResultCode}&transId=${paramTransId}`;
 
     const computedSignature = crypto
@@ -170,9 +176,12 @@ router.post('/verify', authenticate, async (req: Request, res: Response): Promis
       return res.status(400).json({ success: false, message: 'Invalid signature verification' });
     }
 
+    // Extract real orderCode
+    const realOrderCode = orderId.split('_')[0];
+
     const isSuccess = String(resultCode) === '0';
     if (isSuccess) {
-      await updateOrderStatusByCode(orderId, 'confirmed');
+      await updateOrderStatusByCode(realOrderCode, 'confirmed');
     }
 
     return res.status(200).json({
@@ -180,7 +189,7 @@ router.post('/verify', authenticate, async (req: Request, res: Response): Promis
       message: 'Xác thực thanh toán thành công',
       data: {
         isSuccess,
-        orderId,
+        orderId: realOrderCode, // Return clean realOrderCode to the client
         amount,
         message,
         resultCode,

@@ -11,18 +11,18 @@ export const FaqsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
-  
+
   // Form State
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [sortOrder, setSortOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  
+
   const token = localStorage.getItem('auth_token:v1') || undefined;
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  
+
   const total = faqs.length;
   const totalPages = Math.ceil(total / limit) || 1;
   const paginatedFaqs = faqs.slice((page - 1) * limit, page * limit);
@@ -74,10 +74,10 @@ export const FaqsPage: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    
+
     try {
       const payload = { question, answer, sortOrder, isActive };
-      
+
       if (editingFaq) {
         await apiClient.updateFAQ(editingFaq.id, payload, token);
         toast.success('Cập nhật FAQ thành công');
@@ -85,7 +85,7 @@ export const FaqsPage: React.FC = () => {
         await apiClient.createFAQ(payload, token);
         toast.success('Thêm FAQ thành công');
       }
-      
+
       handleCloseModal();
       void fetchFaqs();
     } catch {
@@ -95,7 +95,7 @@ export const FaqsPage: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (!token || !window.confirm('Bạn có chắc chắn muốn xóa FAQ này?')) return;
-    
+
     try {
       await apiClient.deleteFAQ(id, token);
       toast.success('Xóa FAQ thành công');
@@ -106,7 +106,7 @@ export const FaqsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className=" space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-black">Câu hỏi thường gặp</h1>
@@ -124,14 +124,14 @@ export const FaqsPage: React.FC = () => {
 
       <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm min-w-[800px]">
             <thead className="bg-neutral-50 border-b border-neutral-200 text-neutral-500">
               <tr>
-                <th className="px-6 py-4 font-bold">Thứ tự</th>
-                <th className="px-6 py-4 font-bold">Câu hỏi</th>
-                <th className="px-6 py-4 font-bold">Câu trả lời</th>
-                <th className="px-6 py-4 font-bold text-center">Trạng thái</th>
-                <th className="px-6 py-4 font-bold text-right">Thao tác</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Thứ tự</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Câu hỏi</th>
+                <th className="px-6 py-4 font-bold whitespace-nowrap">Câu trả lời</th>
+                <th className="px-6 py-4 font-bold text-center whitespace-nowrap">Trạng thái</th>
+                <th className="px-6 py-4 font-bold text-right whitespace-nowrap">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -156,21 +156,20 @@ export const FaqsPage: React.FC = () => {
               ) : (
                 paginatedFaqs.map((faq) => (
                   <tr key={faq.id} className="hover:bg-neutral-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-black">{faq.sortOrder}</td>
-                    <td className="px-6 py-4 font-semibold text-black max-w-[200px] truncate">{faq.question}</td>
-                    <td className="px-6 py-4 text-neutral-500 max-w-[300px] truncate">{faq.answer}</td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4 font-bold text-black whitespace-nowrap">{faq.sortOrder}</td>
+                    <td className="px-6 py-4 font-semibold text-black max-w-[200px] truncate whitespace-nowrap">{faq.question}</td>
+                    <td className="px-6 py-4 text-neutral-500 max-w-[300px] truncate whitespace-nowrap">{faq.answer}</td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
-                          faq.isActive 
+                        className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${faq.isActive
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-neutral-100 text-neutral-500'
-                        }`}
+                          }`}
                       >
                         {faq.isActive ? 'Hiển thị' : 'Đã ẩn'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenModal(faq)}

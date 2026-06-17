@@ -6,6 +6,7 @@ import { Search, ShoppingBag, Heart, User, Menu, X, LogOut } from 'lucide-react'
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'motion/react';
 import { cn } from '@utils/cn';
 import { getAuth, clearAuth, type AuthState } from '@services/auth.service';
+import logoImg from '../../assets/logo_dt.png';
 
 export const Navbar: React.FC = () => {
   const { cartCount } = useCart();
@@ -53,8 +54,8 @@ export const Navbar: React.FC = () => {
         <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between gap-4">
           {/* Left Block: Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold tracking-tighter text-black dark:text-white" onClick={() => setMenuOpen(false)}>
-              NEXPHONE
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" onClick={() => setMenuOpen(false)}>
+              <img src={logoImg} alt="Logo" className="h-10 w-auto object-contain" />
             </Link>
           </div>
 
@@ -116,7 +117,7 @@ export const Navbar: React.FC = () => {
             </button>
 
             {auth ? (
-              <div className="relative group cursor-pointer">
+              <div className="relative group cursor-pointer hidden md:block">
                 <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                   <div className="w-8 h-8 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-sm font-bold overflow-hidden">
                     {auth.user.avatarUrl ? (
@@ -175,7 +176,7 @@ export const Navbar: React.FC = () => {
               </div>
             ) : (
               <button
-                className="hover:opacity-60 transition-opacity text-sm font-semibold whitespace-nowrap"
+                className="hover:opacity-60 transition-opacity text-sm font-semibold whitespace-nowrap hidden md:block"
                 onClick={() => { navigate('/login'); setMenuOpen(false); }}
                 title="Đăng nhập"
               >
@@ -196,7 +197,7 @@ export const Navbar: React.FC = () => {
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden overflow-hidden bg-white dark:bg-black backdrop-blur-lg border-t border-neutral-200 dark:border-neutral-800 absolute top-full left-0 right-0 shadow-xl"
             >
-              <div className="flex flex-col px-6 py-4 gap-4">
+              <div className="flex flex-col px-6 py-4 gap-4 max-h-[80vh] overflow-y-auto">
                 <form onSubmit={handleSearch} className="relative w-full mb-2">
                   <input
                     type="text"
@@ -211,7 +212,51 @@ export const Navbar: React.FC = () => {
                 <Link to="/" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Trang chủ</Link>
                 <Link to="/products" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Sản phẩm</Link>
                 <Link to="/news" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Tin tức</Link>
-                <Link to="/contact" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2">Liên hệ</Link>
+                <Link to="/contact" onClick={() => setMenuOpen(false)} className="font-semibold text-lg hover:text-neutral-500 transition-colors py-2 border-b border-neutral-100 dark:border-neutral-800">Liên hệ</Link>
+
+                <div className="pt-2">
+                  {auth ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 py-2 px-1 border-b border-neutral-100 dark:border-neutral-800">
+                        <div className="w-9 h-9 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden flex items-center justify-center text-sm font-bold">
+                          {auth.user.avatarUrl ? (
+                            <img 
+                              src={`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '')}${auth.user.avatarUrl}`} 
+                              alt="Avatar" 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            auth.user.fullName.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-black dark:text-white">{auth.user.fullName}</p>
+                          <p className="text-xs text-neutral-500">{auth.user.email}</p>
+                        </div>
+                      </div>
+                      
+                      <Link to="/profile" onClick={() => setMenuOpen(false)} className="block py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white">Quản lý hồ sơ</Link>
+                      <Link to="/orders" onClick={() => setMenuOpen(false)} className="block py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white">Đơn hàng của tôi</Link>
+                      <Link to="/addresses" onClick={() => setMenuOpen(false)} className="block py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white">Địa chỉ của tôi</Link>
+                      {auth.user.role === 'admin' && (
+                        <Link to="/admin" onClick={() => setMenuOpen(false)} className="block py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Bảng điều khiển Admin</Link>
+                      )}
+                      <button 
+                        onClick={() => { handleLogout(); setMenuOpen(false); }}
+                        className="w-full text-left py-2 text-sm font-semibold text-red-600 hover:text-red-500"
+                      >
+                        Đăng xuất
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => { navigate('/login'); setMenuOpen(false); }}
+                      className="w-full py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-semibold hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors text-center"
+                    >
+                      Đăng nhập
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

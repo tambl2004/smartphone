@@ -6,11 +6,13 @@ import { formatPrice } from '@utils/format';
 
 export const FloatingCart = () => {
   const { cartCount, cartTotal } = useCart();
-  const { navigate } = useRouter();
+  const { navigate, path } = useRouter();
+
+  const isHidden = path === '/cart' || path === '/checkout';
 
   return (
     <AnimatePresence>
-      {cartCount > 0 && (
+      {cartCount > 0 && !isHidden && (
         <motion.button
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

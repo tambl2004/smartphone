@@ -24,11 +24,15 @@ export const getMyOrdersController = async (req: Request, res: Response) => {
 export const updateOrderStatusController = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
-  const success = await updateOrderStatus(Number(id), status);
-  if (!success) {
-    return res.status(404).json({ success: false, message: 'Order not found' });
+  try {
+    const success = await updateOrderStatus(Number(id), status);
+    if (!success) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+    }
+    return sendSuccess(res, 200, 'Cập nhật trạng thái đơn hàng thành công', { id: Number(id), status });
+  } catch (error: any) {
+    return res.status(400).json({ success: false, message: error.message || 'Lỗi khi cập nhật trạng thái đơn hàng' });
   }
-  return sendSuccess(res, 200, 'Order status updated successfully', { id: Number(id), status });
 };
 
 export const deleteOrderController = async (req: Request, res: Response) => {

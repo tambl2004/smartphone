@@ -90,19 +90,95 @@ export const findAllOrders = async (query: ListQuery) => {
 };
 
 export const updateOrderStatus = async (id: number, status: string) => {
-  const [result] = await getDb().query(
-    'UPDATE orders SET status = ? WHERE id = ?',
-    [status, id]
-  );
-  return (result as any).affectedRows > 0;
+  const db = getDb();
+  const [rows] = await db.query('SELECT status FROM orders WHERE id = ?', [id]);
+  const order = (rows as any[])[0];
+  if (!order) return false;
+
+  const currentStatus = order.status;
+  if (currentStatus === 'delivered' || currentStatus === 'cancelled') {
+    throw new Error(`Đơn hàng đã ở trạng thái ${currentStatus === 'delivered' ? 'Đã giao' : 'Đã hủy'}, không thể thay đổi trạng thái.`);
+  }
+
+  try {
+    await db.beginTransaction();
+
+    const [result] = await db.query(
+      'UPDATE orders SET status = ? WHERE id = ?',
+      [status, id]
+    );
+
+    if ((result as any).affectedRows === 0) {
+      await db.rollback();
+      return false;
+    }
+
+    if (status === 'cancelled') {
+      const [items] = await db.query(
+        'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+        [id]
+      );
+
+      for (const item of items as any[]) {
+        await db.query(
+          'UPDATE products SET stock = stock + ? WHERE id = ?',
+          [item.quantity, item.product_id]
+        );
+      }
+    }
+
+    await db.commit();
+    return true;
+  } catch (error) {
+    await db.rollback();
+    throw error;
+  }
 };
 
 export const updateOrderStatusByCode = async (orderCode: string, status: string) => {
-  const [result] = await getDb().query(
-    'UPDATE orders SET status = ? WHERE order_code = ?',
-    [status, orderCode]
-  );
-  return (result as any).affectedRows > 0;
+  const db = getDb();
+  const [rows] = await db.query('SELECT id, status FROM orders WHERE order_code = ?', [orderCode]);
+  const order = (rows as any[])[0];
+  if (!order) return false;
+
+  const currentStatus = order.status;
+  if (currentStatus === 'delivered' || currentStatus === 'cancelled') {
+    throw new Error(`Đơn hàng đã ở trạng thái ${currentStatus === 'delivered' ? 'Đã giao' : 'Đã hủy'}, không thể thay đổi trạng thái.`);
+  }
+
+  try {
+    await db.beginTransaction();
+
+    const [result] = await db.query(
+      'UPDATE orders SET status = ? WHERE order_code = ?',
+      [status, orderCode]
+    );
+
+    if ((result as any).affectedRows === 0) {
+      await db.rollback();
+      return false;
+    }
+
+    if (status === 'cancelled') {
+      const [items] = await db.query(
+        'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+        [order.id]
+      );
+
+      for (const item of items as any[]) {
+        await db.query(
+          'UPDATE products SET stock = stock + ? WHERE id = ?',
+          [item.quantity, item.product_id]
+        );
+      }
+    }
+
+    await db.commit();
+    return true;
+  } catch (error) {
+    await db.rollback();
+    throw error;
+  }
 };
 
 export const findOrderById = async (id: number) => {

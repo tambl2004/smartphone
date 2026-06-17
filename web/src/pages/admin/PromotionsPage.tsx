@@ -136,7 +136,7 @@ export const ContentPromotionsPage: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight">Khuyến mãi & Voucher</h1>
           <p className="text-sm opacity-40 mt-1">Quản lý mã giảm giá và chương trình ưu đãi</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="hidden sm:flex items-center gap-1 bg-white/[0.02] p-1 rounded-lg border border-white/[0.06]">
             <button onClick={() => setViewMode('grid')} className={`w-8 h-8 rounded-md flex items-center justify-center transition-all border-none outline-none ${viewMode === 'grid' ? 'bg-white/[0.08] text-white shadow-sm' : 'text-white/40 hover:text-white hover:bg-white/[0.04]'}`}>
               <LayoutGrid size={15} />
@@ -145,7 +145,7 @@ export const ContentPromotionsPage: React.FC = () => {
               <List size={15} />
             </button>
           </div>
-          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none">
+          <button onClick={openAdd} className="h-9 px-4 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 border-none rounded-lg text-sm text-white font-medium transition-all outline-none whitespace-nowrap">
             <Plus size={14} /> Thêm mã
           </button>
         </div>
@@ -188,29 +188,29 @@ export const ContentPromotionsPage: React.FC = () => {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Mã KM</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Mức giảm</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Đã dùng / Giới hạn</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Giới hạn 1 người</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Mã KM</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Mức giảm</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Đã dùng / Giới hạn</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Giới hạn 1 người</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Trạng thái</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right whitespace-nowrap">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {paginatedPromotions.map((promo) => (
                   <tr key={promo.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-purple-500 dark:text-purple-400">%</span>
                         </div>
-                        <p className="text-sm font-bold tracking-wider text-white">{promo.code}</p>
+                        <p className="text-sm font-bold tracking-wider text-white whitespace-nowrap">{promo.code}</p>
                       </div>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <p className="text-sm font-bold text-emerald-500 dark:text-emerald-400">-{promo.discountType === 'percent' ? promo.discountValue + '%' : promo.discountValue.toLocaleString() + 'đ'}</p>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1.5 w-32">
                         <div className="flex justify-between text-[10px] text-white/60">
                           <span>{promo.usedCount}</span>
@@ -221,15 +221,15 @@ export const ContentPromotionsPage: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-center text-sm text-white/80">
+                    <td className="p-4 text-center text-sm text-white/80 whitespace-nowrap">
                       {promo.perUserLimit} lần
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${promo.isActive ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'bg-red-500/10 text-red-500 dark:text-red-400'}`}>
                         {promo.isActive ? 'Hoạt động' : 'Tạm dừng'}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEdit(promo)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none border-none"><Edit2 size={14} /></button>
                         <button onClick={() => setDeleteTarget(promo)} className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-500/[0.08] hover:bg-red-500/[0.15] transition-all outline-none border-none"><Trash2 size={14} /></button>

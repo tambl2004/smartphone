@@ -51,15 +51,9 @@ const AdminOrderStatusStepper: React.FC<{
             </div>
             <div>
               <h5 className="font-bold text-red-600 dark:text-red-400 text-base">Đơn hàng đã hủy</h5>
-              <p className="text-xs text-red-500/80 dark:text-red-400/70 mt-0.5">Trạng thái này không thể tự động khôi phục.</p>
+              <p className="text-xs text-red-500/80 dark:text-red-400/70 mt-0.5">Trạng thái này được khóa và không thể thay đổi.</p>
             </div>
           </div>
-          <button
-            onClick={() => onStatusChange('pending')}
-            className="text-xs font-bold text-neutral-500 hover:text-black dark:hover:text-white bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-          >
-            Khôi phục đơn hàng
-          </button>
         </div>
       ) : (
         <div className="max-w-4xl mx-auto">
@@ -80,8 +74,15 @@ const AdminOrderStatusStepper: React.FC<{
               return (
                 <button
                   key={step.key}
-                  onClick={() => onStatusChange(step.key)}
-                  className="flex md:flex-col items-center gap-4 md:gap-2 flex-1 w-full relative z-10 bg-transparent border-none outline-none group cursor-pointer text-left md:text-center"
+                  onClick={() => {
+                    if (status !== 'delivered' && status !== 'cancelled') {
+                      onStatusChange(step.key);
+                    }
+                  }}
+                  disabled={status === 'delivered' || status === 'cancelled'}
+                  className={`flex md:flex-col items-center gap-4 md:gap-2 flex-1 w-full relative z-10 bg-transparent border-none outline-none group text-left md:text-center ${
+                    status === 'delivered' || status === 'cancelled' ? 'cursor-default' : 'cursor-pointer'
+                  }`}
                 >
                   {/* Vertical line for mobile */}
                   {index < steps.length - 1 && (
@@ -114,7 +115,7 @@ const AdminOrderStatusStepper: React.FC<{
                       {step.label}
                     </span>
                     <span className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Click để chuyển
+                      {status === 'delivered' || status === 'cancelled' ? '' : 'Click để chuyển'}
                     </span>
                   </div>
                 </button>
@@ -128,9 +129,10 @@ const AdminOrderStatusStepper: React.FC<{
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => onStatusChange('confirmed')}
-                  className="inline-flex h-10 items-center justify-center bg-indigo-600 text-white px-5 font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                  className="inline-flex h-10 items-center justify-center bg-indigo-600 px-5 font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                  style={{ color: '#ffffff' }}
                 >
-                  <CheckCircle2 size={16} /> Xác nhận đơn hàng
+                  <CheckCircle2 size={16} color="#ffffff" /> Xác nhận đơn hàng
                 </button>
                 <button
                   onClick={() => onStatusChange('cancelled')}
@@ -143,17 +145,19 @@ const AdminOrderStatusStepper: React.FC<{
             {status === 'confirmed' && (
               <button
                 onClick={() => onStatusChange('shipping')}
-                className="inline-flex h-10 items-center justify-center bg-purple-600 text-white px-5 font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                className="inline-flex h-10 items-center justify-center bg-purple-600 px-5 font-bold rounded-xl hover:bg-purple-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                style={{ color: '#ffffff' }}
               >
-                <Truck size={16} /> Bàn giao vận chuyển (ĐVVC)
+                <Truck size={16} color="#ffffff" /> Bàn giao vận chuyển (ĐVVC)
               </button>
             )}
             {status === 'shipping' && (
               <button
                 onClick={() => onStatusChange('delivered')}
-                className="inline-flex h-10 items-center justify-center bg-emerald-600 text-white px-5 font-bold rounded-xl hover:bg-emerald-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                className="inline-flex h-10 items-center justify-center bg-emerald-600 px-5 font-bold rounded-xl hover:bg-emerald-700 transition-colors text-sm gap-2 border-none cursor-pointer"
+                style={{ color: '#ffffff' }}
               >
-                <Package size={16} /> Giao hàng thành công
+                <Package size={16} color="#ffffff" /> Giao hàng thành công
               </button>
             )}
             {status === 'delivered' && (
@@ -227,14 +231,19 @@ export const OrdersPage: React.FC = () => {
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     const auth = getAuth();
     if (!auth?.token) return;
+    const toastId = toast.loading('Đang cập nhật trạng thái...');
     try {
       await orderService.updateOrderStatus(orderId, newStatus, auth.token);
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
+      toast.success('Cập nhật trạng thái thành công!', { id: toastId });
     } catch (error) {
       console.error('Failed to update status', error);
+      const err = error as { response?: { data?: { message?: string } } };
+      const msg = err.response?.data?.message || 'Cập nhật trạng thái thất bại';
+      toast.error(msg, { id: toastId });
     }
   };
 
@@ -291,7 +300,7 @@ export const OrdersPage: React.FC = () => {
       {/* Orders Table */}
       <ChartCard title={`Danh sách đơn hàng`}>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-neutral-100 dark:border-white/[0.06]">
                 <th className="text-left text-xs font-medium text-neutral-400 pb-3 pr-4">Mã đơn</th>
@@ -340,9 +349,14 @@ export const OrdersPage: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
+                          if (order.status !== 'delivered' && order.status !== 'cancelled') {
+                            setActiveDropdownId(activeDropdownId === order.id ? null : order.id);
+                          }
                         }}
-                        className={`text-xs font-bold px-2.5 py-1 rounded-full border outline-none cursor-pointer transition-all hover:opacity-85 ${statusMap[order.status]?.color || 'text-neutral-600 bg-neutral-100'}`}
+                        disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                        className={`text-xs font-bold px-2.5 py-1 rounded-full border outline-none transition-all ${
+                          order.status === 'delivered' || order.status === 'cancelled' ? 'cursor-default' : 'cursor-pointer hover:opacity-85'
+                        } ${statusMap[order.status]?.color || 'text-neutral-600 bg-neutral-100'}`}
                       >
                         {statusMap[order.status]?.label || order.status}
                       </button>
@@ -409,7 +423,7 @@ export const OrdersPage: React.FC = () => {
               className="bg-white dark:bg-neutral-900 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between sticky top-0 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-md z-10">
+              <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 z-10 flex-shrink-0">
                 <div>
                   <h3 className="text-xl font-black text-black dark:text-white mb-1">Chi tiết đơn hàng</h3>
                   <p className="text-sm text-neutral-500 font-medium">
@@ -426,14 +440,15 @@ export const OrdersPage: React.FC = () => {
                 </button>
               </div>
               
-              <AdminOrderStatusStepper 
-                status={selectedOrder.status} 
-                onStatusChange={(newStatus) => handleStatusChange(selectedOrder.id, newStatus)} 
-              />
-              
-              <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+                <AdminOrderStatusStepper 
+                  status={selectedOrder.status} 
+                  onStatusChange={(newStatus) => handleStatusChange(selectedOrder.id, newStatus)} 
+                />
+                
+                <div className="flex flex-col lg:flex-row lg:overflow-hidden lg:flex-1 min-h-0">
                 <div className="w-full lg:w-1/2 flex flex-col border-r border-neutral-100 dark:border-neutral-800">
-                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                  <div className="p-6 lg:overflow-y-auto lg:custom-scrollbar flex-1">
                     <div className="mb-8">
                       <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2"><CreditCard size={16} className="text-neutral-400" /> Thông tin giao hàng</h4>
                       <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-5 space-y-4 text-sm">
@@ -460,7 +475,7 @@ export const OrdersPage: React.FC = () => {
                 </div>
                 
                 <div className="w-full lg:w-1/2 flex flex-col bg-neutral-50/50 dark:bg-neutral-800/20">
-                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                  <div className="p-6 lg:overflow-y-auto lg:custom-scrollbar flex-1">
                     <h4 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2"><Package size={16} className="text-neutral-400" /> Sản phẩm ({selectedOrder.items?.length || 0})</h4>
                     <div className="space-y-4">
                       {selectedOrder.items?.map((item, i) => (
@@ -487,7 +502,7 @@ export const OrdersPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
-
+ 
                   <div className="p-6 border-t border-neutral-100 dark:border-neutral-800 bg-white/50 dark:bg-neutral-900/50 flex flex-col gap-3 backdrop-blur-sm">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-neutral-500">Tạm tính:</span>
@@ -506,8 +521,9 @@ export const OrdersPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center border-t border-neutral-100 dark:border-neutral-800">
+            <div className="p-4 bg-white dark:bg-neutral-900 flex justify-between items-center border-t border-neutral-100 dark:border-neutral-800 flex-shrink-0">
                 <button 
                   onClick={() => handleDeleteOrder(selectedOrder.id)}
                   className="inline-flex h-12 items-center justify-center bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 px-6 font-bold rounded-xl hover:opacity-85 transition-opacity text-sm gap-2"

@@ -229,24 +229,24 @@ export const UsersPage: React.FC = () => {
       {!loading && (
         <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">ID</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Hình ảnh</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Họ và tên</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Email</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Số điện thoại</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Vai trò</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">ID</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Hình ảnh</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Họ và tên</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Email</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Số điện thoại</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Vai trò</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Trạng thái</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right whitespace-nowrap">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {paginatedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="p-4 text-sm text-white/60">#{user.id}</td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-sm text-white/60 whitespace-nowrap">#{user.id}</td>
+                    <td className="p-4 text-center whitespace-nowrap">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs mx-auto overflow-hidden">
                         {getAvatarUrl(user.avatarUrl) ? (
                           <img src={getAvatarUrl(user.avatarUrl)!} alt={user.fullName} className="w-full h-full object-cover" />
@@ -255,27 +255,27 @@ export const UsersPage: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-sm font-medium text-white">{user.fullName}</td>
-                    <td className="p-4 text-sm text-white/60">
+                    <td className="p-4 text-sm font-medium text-white whitespace-nowrap">{user.fullName}</td>
+                    <td className="p-4 text-sm text-white/60 whitespace-nowrap">
                       <span className="flex items-center gap-1.5"><Mail size={14} className="opacity-50" /> {user.email}</span>
                     </td>
-                    <td className="p-4 text-sm text-white/60">
+                    <td className="p-4 text-sm text-white/60 whitespace-nowrap">
                       {user.phone ? (
                         <span className="flex items-center gap-1.5"><Phone size={14} className="opacity-50" /> {user.phone}</span>
                       ) : '—'}
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-400' : 'bg-white/5 text-white/60'}`}>
                         {user.role === 'admin' ? <ShieldAlert size={12} /> : <UsersIcon size={12} />}
                         {user.role === 'admin' ? 'Admin' : 'User'}
                       </span>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <div className="flex justify-center">
                         <StatusBadge status={user.status as 'active' | 'blocked'} />
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {user.role !== 'admin' ? (
                           <>

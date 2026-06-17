@@ -4,6 +4,8 @@ import { motion } from 'motion/react';
 import { Eye, EyeOff, ArrowRight, Mail, Lock, User as UserIcon, Phone, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authRegister, authVerifyRegister } from '@services/auth.service';
+import nenmayBg from '../../assets/nenmay.jpg';
+import logoImg from '../../assets/logo_dt.png';
 
 const passwordRules = [
     { label: 'Tối thiểu 8 ký tự', test: (p: string) => p.length >= 8 },
@@ -98,163 +100,94 @@ export const RegisterPage: React.FC = () => {
     const passwordStrength = passwordRules.filter(r => r.test(formData.password)).length;
 
     return (
-        <div className="min-h-screen flex">
-            {/* Left Panel - Brand */}
-            <div className="hidden lg:flex lg:w-[45%] xl:w-[60%] relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950" />
+        <div
+            className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden bg-cover bg-center select-none"
+            style={{ backgroundImage: `url(${nenmayBg})` }}
+        >
+            {/* Soft dark/light overlay to improve readability over cloud background */}
+            <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/40" />
 
-                {/* Decorative elements */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <motion.div
-                        animate={{
-                            y: [0, -25, 0],
-                            x: [0, 10, 0],
-                        }}
-                        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute top-[10%] right-[10%] w-80 h-80 rounded-full bg-gradient-to-br from-white/[0.04] to-transparent blur-sm"
-                    />
-                    <motion.div
-                        animate={{
-                            y: [0, 15, 0],
-                            x: [0, -8, 0],
-                        }}
-                        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-                        className="absolute bottom-[15%] left-[5%] w-72 h-72 rounded-full bg-gradient-to-tl from-white/[0.03] to-transparent blur-sm"
-                    />
-
-                    {/* Geometric lines */}
-                    <svg className="absolute inset-0 w-full h-full opacity-[0.04]" viewBox="0 0 800 1000">
-                        <motion.line
-                            x1="100" y1="0" x2="700" y2="1000"
-                            stroke="white" strokeWidth="1"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 3, ease: 'easeInOut' }}
-                        />
-                        <motion.line
-                            x1="300" y1="0" x2="500" y2="1000"
-                            stroke="white" strokeWidth="1"
-                            initial={{ pathLength: 0 }}
-                            animate={{ pathLength: 1 }}
-                            transition={{ duration: 3, ease: 'easeInOut', delay: 0.5 }}
-                        />
-                    </svg>
-                </div>
-
-                <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
-                    <div>
-                        <Link to="/" className="text-2xl font-bold tracking-tighter text-white">
-                            NEXPHONE
-                        </Link>
-                    </div>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="max-w-md"
-                    >
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-12 h-[2px] bg-white/40" />
-                            <span className="text-white/40 text-xs font-medium tracking-[0.2em] uppercase">Tạo tài khoản</span>
-                        </div>
-                        <h1 className="text-4xl xl:text-5xl font-bold text-white leading-[1.15] mb-6 tracking-tight">
-                            Gia nhập cộng đồng<br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-neutral-300 to-neutral-500">công nghệ Nexphone</span>
-                        </h1>
-                        <p className="text-neutral-400 text-base leading-relaxed max-w-sm">
-                            Tạo tài khoản để nhận ngay voucher giảm 500K cho đơn hàng đầu tiên và nhiều ưu đãi hấp dẫn khác.
-                        </p>
-                    </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.8 }}
-                    >
-                        <div className="space-y-3">
-                            {['Tích điểm đổi quà mỗi đơn hàng', 'Theo dõi đơn hàng realtime', 'Ưu đãi sinh nhật độc quyền'].map((text, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, x: -15 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1 + i * 0.15 }}
-                                    className="flex items-center gap-3"
-                                >
-                                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                                        <CheckCircle2 size={12} className="text-emerald-400" />
-                                    </div>
-                                    <span className="text-neutral-400 text-sm">{text}</span>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
+            {/* Glowing background circles for depth */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <motion.div
+                    animate={{
+                        y: [0, -20, 0],
+                        scale: [1, 1.05, 1],
+                    }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl"
+                />
+                <motion.div
+                    animate={{
+                        y: [0, 20, 0],
+                        scale: [1, 1.05, 1],
+                    }}
+                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                    className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-violet-500/10 dark:bg-violet-500/5 blur-3xl"
+                />
             </div>
 
-            {/* Right Panel - Form */}
-            <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white dark:bg-neutral-950">
-                <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="w-full max-w-[420px]"
-                >
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden mb-10">
-                        <Link to="/" className="text-2xl font-bold tracking-tighter text-black dark:text-white">
-                            NEXPHONE
-                        </Link>
-                    </div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="relative z-10 w-full max-w-[520px] bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl border border-white/40 dark:border-neutral-800/40 rounded-3xl p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+            >
+                {/* Logo */}
+                <div className="mb-6 flex justify-center">
+                    <Link to="/" className="hover:opacity-80 transition-opacity">
+                        <img src={logoImg} alt="Logo" className="h-12 w-auto object-contain" />
+                    </Link>
+                </div>
 
-                    <div className="mb-8 text-center">
-                        <h2 className="text-4xl font-bold text-black dark:text-white tracking-tight">
-                            {step === 'form' ? 'Đăng ký' : 'Xác thực email'}
-                        </h2>
-                        {step === 'otp' && (
-                            <p className="text-neutral-500 text-sm mt-2">
-                                Nhập mã 6 số đã gửi đến <strong className="text-black dark:text-white">{formData.email}</strong>
-                            </p>
-                        )}
-                    </div>
+                <div className="mb-8 text-center">
+                    <h2 className="text-3xl font-bold text-black dark:text-white tracking-tight">
+                        {step === 'form' ? 'Đăng ký' : 'Xác thực email'}
+                    </h2>
+                    {step === 'otp' && (
+                        <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-2">
+                            Nhập mã 6 số đã gửi đến <strong className="text-black dark:text-white">{formData.email}</strong>
+                        </p>
+                    )}
+                </div>
 
-                    {step === 'otp' ? (
-                        <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            <div className="flex gap-2.5 justify-between">
-                                {otp.map((digit, i) => (
-                                    <input
-                                        key={i}
-                                        id={`reg-otp-${i}`}
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength={1}
-                                        value={digit}
-                                        onChange={(e) => handleOtpChange(i, e.target.value.replace(/\D/g, ''))}
-                                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                                        className="w-full aspect-square max-w-[56px] text-center text-xl font-bold bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-black dark:text-white outline-none focus:border-black dark:focus:border-white transition-all duration-200"
-                                    />
-                                ))}
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="relative w-full h-13 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group overflow-hidden"
-                            >
-                                <span className={`inline-flex items-center gap-2 transition-all duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-                                    Xác nhận
-                                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
-                                </span>
-                                {isLoading && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-5 h-5 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin" />
-                                    </div>
-                                )}
-                            </button>
-                            <button type="button" onClick={() => setStep('form')} className="w-full text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
-                                ← Quay lại chỉnh sửa thông tin
-                            </button>
-                        </form>
-                    ) : (
+                {step === 'otp' ? (
+                    <form onSubmit={handleVerifyOtp} className="space-y-6">
+                        <div className="flex gap-2 justify-between">
+                            {otp.map((digit, i) => (
+                                <input
+                                    key={i}
+                                    id={`reg-otp-${i}`}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleOtpChange(i, e.target.value.replace(/\D/g, ''))}
+                                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                                    className="w-full aspect-square max-w-[50px] text-center text-xl font-bold bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl text-black dark:text-white outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
+                                />
+                            ))}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="relative w-full h-13 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group overflow-hidden"
+                        >
+                            <span className={`inline-flex items-center gap-2 transition-all duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+                                Xác nhận
+                                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
+                            </span>
+                            {isLoading && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-5 h-5 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin" />
+                                </div>
+                            )}
+                        </button>
+                        <button type="button" onClick={() => setStep('form')} className="w-full text-sm text-neutral-500 hover:text-black dark:hover:text-white transition-colors">
+                            ← Quay lại chỉnh sửa thông tin
+                        </button>
+                    </form>
+                ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Full Name */}
                         <div className="relative">
@@ -269,7 +202,7 @@ export const RegisterPage: React.FC = () => {
                                 onFocus={() => setFocusedField('fullName')}
                                 onBlur={() => setFocusedField(null)}
                                 placeholder="Họ và tên"
-                                className="w-full h-13 pl-12 pr-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
+                                className="w-full h-13 pl-12 pr-4 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                             />
                         </div>
 
@@ -286,7 +219,7 @@ export const RegisterPage: React.FC = () => {
                                 onFocus={() => setFocusedField('email')}
                                 onBlur={() => setFocusedField(null)}
                                 placeholder="Email"
-                                className="w-full h-13 pl-12 pr-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
+                                className="w-full h-13 pl-12 pr-4 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                                 autoComplete="email"
                             />
                         </div>
@@ -304,7 +237,7 @@ export const RegisterPage: React.FC = () => {
                                 onFocus={() => setFocusedField('phone')}
                                 onBlur={() => setFocusedField(null)}
                                 placeholder="Số điện thoại (tùy chọn)"
-                                className="w-full h-13 pl-12 pr-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
+                                className="w-full h-13 pl-12 pr-4 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                             />
                         </div>
 
@@ -321,7 +254,7 @@ export const RegisterPage: React.FC = () => {
                                 onFocus={() => setFocusedField('password')}
                                 onBlur={() => setFocusedField(null)}
                                 placeholder="Mật khẩu"
-                                className="w-full h-13 pl-12 pr-12 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
+                                className="w-full h-13 pl-12 pr-12 bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200"
                                 autoComplete="new-password"
                             />
                             <button
@@ -375,7 +308,7 @@ export const RegisterPage: React.FC = () => {
                                 onFocus={() => setFocusedField('confirm')}
                                 onBlur={() => setFocusedField(null)}
                                 placeholder="Xác nhận mật khẩu"
-                                className={`w-full h-13 pl-12 pr-12 bg-neutral-50 dark:bg-neutral-900 border rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200 ${formData.confirmPassword && formData.confirmPassword !== formData.password
+                                className={`w-full h-13 pl-12 pr-12 bg-neutral-50/50 dark:bg-neutral-900/50 border rounded-xl text-sm text-black dark:text-white placeholder:text-neutral-400 outline-none focus:bg-white dark:focus:bg-neutral-900 transition-all duration-200 ${formData.confirmPassword && formData.confirmPassword !== formData.password
                                     ? 'border-red-400 focus:border-red-500'
                                     : 'border-neutral-200 dark:border-neutral-800 focus:border-black dark:focus:border-white'
                                     }`}
@@ -404,7 +337,7 @@ export const RegisterPage: React.FC = () => {
                                     <path d="M2.5 6L5 8.5L9.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </div>
-                            <span className="text-sm text-neutral-500 leading-relaxed">
+                            <span className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
                                 Tôi đồng ý với{' '}
                                 <a href="#" className="text-black dark:text-white font-medium hover:underline">Điều khoản dịch vụ</a>{' '}
                                 và{' '}
@@ -430,16 +363,15 @@ export const RegisterPage: React.FC = () => {
                             )}
                         </button>
                     </form>
-                    )}
+                )}
 
-                    <p className="mt-8 text-center text-sm text-neutral-500">
-                        Đã có tài khoản?{' '}
-                        <Link to="/login" className="text-blue-600 dark:text-blue-600 font-semibold hover:underline underline-offset-4">
-                            Đăng nhập
-                        </Link>
-                    </p>
-                </motion.div>
-            </div>
+                <p className="mt-8 text-center text-sm text-neutral-500">
+                    Đã có tài khoản?{' '}
+                    <Link to="/login" className="text-blue-600 dark:text-blue-500 font-semibold hover:underline underline-offset-4">
+                        Đăng nhập
+                    </Link>
+                </p>
+            </motion.div>
         </div>
     );
 };

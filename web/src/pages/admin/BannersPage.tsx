@@ -107,38 +107,38 @@ export const ContentBannersPage: React.FC = () => {
       ) : (
         <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Banner</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider">Vị trí</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center">Trạng thái</th>
-                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right">Thao tác</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Banner</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider whitespace-nowrap">Vị trí</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-center whitespace-nowrap">Trạng thái</th>
+                  <th className="p-4 text-xs font-semibold text-white/40 uppercase tracking-wider text-right whitespace-nowrap">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
                 {paginatedBanners.map((banner) => (
                   <tr key={banner.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-20 h-12 rounded overflow-hidden">
+                        <div className="w-20 h-12 rounded overflow-hidden flex-shrink-0">
                           <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white">{banner.title}</p>
-                          <p className="text-xs text-white/40 mt-0.5">Tạo: {new Date(banner.createdAt).toLocaleDateString('vi-VN')}</p>
+                          <p className="text-sm font-medium text-white whitespace-nowrap">{banner.title}</p>
+                          <p className="text-xs text-white/40 mt-0.5 whitespace-nowrap">Tạo: {new Date(banner.createdAt).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <p className="text-sm text-white/80">{banner.position}</p>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${banner.status === 'active' ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-black/50 text-white/70'}`}>
                         {banner.status === 'active' ? 'Hiển thị' : 'Nháp'}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEdit(banner)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all outline-none border-none"><Edit2 size={14} /></button>
                         <button onClick={() => setDeleteTarget(banner)} className="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 bg-red-500/[0.08] hover:bg-red-500/[0.15] transition-all outline-none border-none"><Trash2 size={14} /></button>

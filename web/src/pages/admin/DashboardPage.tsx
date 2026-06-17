@@ -114,7 +114,7 @@ export const DashboardPage: React.FC = () => {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}>
-                  <Icon size={18} className="text-white" />
+                  <Icon size={18} color="#ffffff" className="text-white" />
                 </div>
                 <div className={`flex items-center gap-1 text-xs font-medium ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
                   {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -156,7 +156,7 @@ export const DashboardPage: React.FC = () => {
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#ffffff15', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
                       itemStyle={{ color: '#fff' }}
-                      formatter={(value: number) => [formatCurrency(Number(value || 0)), 'Doanh thu']}
+                      formatter={(value: unknown) => [formatCurrency(Number(value as number || 0)), 'Doanh thu']}
                       labelStyle={{ color: '#ffffff50', marginBottom: '4px' }}
                     />
                     <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorDashboardRevenue)" />
@@ -204,7 +204,7 @@ export const DashboardPage: React.FC = () => {
             }
           >
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[650px]">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-white/[0.04]">
                     <th className="text-left text-xs font-medium opacity-50 pb-3 pr-4">Mã đơn</th>

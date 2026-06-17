@@ -27,6 +27,7 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   stock: number;
+  sold: number;
   description: string | null;
   featured: number;
   status: 'active' | 'draft' | 'out_of_stock' | 'hidden';

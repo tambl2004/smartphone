@@ -6,7 +6,8 @@ import { ProductSort } from '@/components/users/product/ProductSort';
 import { ProductList } from '@/components/users/product/ProductList';
 import { Pagination } from '@/components/common/Pagination';
 import { useRouter } from '@routes/router';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { SlidersHorizontal, X } from 'lucide-react';
 
 export const ProductListPage: React.FC = () => {
   const { path } = useRouter();
@@ -26,6 +27,7 @@ export const ProductListPage: React.FC = () => {
   const [brand, setBrand] = useState<string | undefined>(undefined);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000000 });
   const [sort, setSort] = useState('featured');
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -101,10 +103,11 @@ export const ProductListPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10 items-start">
+          {/* Desktop Filter Sidebar */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="w-full lg:w-72 flex-none lg:sticky lg:top-28"
+            className="hidden lg:block w-72 flex-none lg:sticky lg:top-28"
           >
             <ProductFilter
               selectedCategoryId={categoryId}
@@ -117,11 +120,67 @@ export const ProductListPage: React.FC = () => {
             />
           </motion.div>
 
+          {/* Mobile Filter Drawer Overlay */}
+          <AnimatePresence>
+            {showFiltersMobile && (
+              <>
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowFiltersMobile(false)}
+                  className="fixed inset-0 bg-black z-50 lg:hidden"
+                />
+                {/* Drawer Content */}
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="fixed inset-y-0 left-0 w-[290px] bg-white dark:bg-neutral-900 z-50 p-6 overflow-y-auto lg:hidden shadow-2xl flex flex-col"
+                >
+                  <div className="flex items-center justify-between mb-6 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <span className="font-bold text-lg text-black dark:text-white">Bộ lọc</span>
+                    <button
+                      onClick={() => setShowFiltersMobile(false)}
+                      className="text-neutral-500 hover:text-black dark:hover:text-white"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <ProductFilter
+                      selectedCategoryId={categoryId}
+                      onCategoryChange={(val) => { setCategoryId(val); setPage(1); setShowFiltersMobile(false); }}
+                      selectedBrand={brand}
+                      onBrandChange={(val) => { setBrand(val); setPage(1); setShowFiltersMobile(false); }}
+                      selectedPriceRange={priceRange}
+                      onPriceRangeChange={(min, max) => { setPriceRange({ min, max }); setPage(1); setShowFiltersMobile(false); }}
+                      onReset={() => { handleResetFilters(); setPage(1); setShowFiltersMobile(false); }}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
           <div className="flex-1 w-full">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
+              {/* Mobile Filter Toggle Button */}
+              <div className="lg:hidden flex items-center justify-between gap-4 mb-4">
+                <button
+                  onClick={() => setShowFiltersMobile(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-neutral-100 dark:bg-neutral-900 text-black dark:text-white rounded-lg text-xs font-semibold hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-neutral-200 dark:border-neutral-800"
+                >
+                  <SlidersHorizontal size={14} />
+                  Bộ lọc tìm kiếm
+                </button>
+              </div>
+
               <ProductSort
                 selectedSort={sort}
                 onSortChange={(val) => { setSort(val); setPage(1); }}

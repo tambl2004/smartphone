@@ -14,13 +14,17 @@ import {
   HelpCircle,
   UserCog,
   MessageSquare,
-  Star
+  Star,
+  X
 } from 'lucide-react';
-import logoImg from '../../assets/logo.png';
+import logoSmall from '../../assets/logo_dt1.png';
+import logoFull from '../../assets/logo_dt.png';
 
 interface SidebarProps {
   collapsed: boolean;
   isDark: boolean;
+  isMobile: boolean;
+  onCloseMobile: () => void;
 }
 
 const menuItems = [
@@ -40,7 +44,7 @@ const menuItems = [
   { icon: BarChart3, label: 'Báo cáo', path: '/admin/reports' },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed, isDark }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ collapsed, isDark, isMobile, onCloseMobile }) => {
   const { path, navigate } = useRouter();
 
   const isActive = (itemPath: string) => {
@@ -51,7 +55,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, isDark }) => {
   // Theme classes
   const bg = isDark ? 'bg-[#0F0F0F]' : 'bg-white';
   const borderColor = isDark ? 'border-white/[0.06]' : 'border-black/[0.06]';
-  const logoText = isDark ? 'text-white' : 'text-[#1d1d1f]';
   const labelColor = isDark ? 'text-white/30' : 'text-black/60';
   const activeItemBg = isDark ? 'bg-white/[0.1] text-white' : 'bg-black/[0.06] text-black';
   const activeIconColor = isDark ? 'text-indigo-400' : 'text-black';
@@ -63,33 +66,55 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, isDark }) => {
     ? 'text-white/40 hover:text-red-400 hover:bg-red-500/[0.08]'
     : 'text-black/40 hover:text-red-500 hover:bg-red-500/[0.06]';
 
+  const width = isMobile ? 260 : (collapsed ? 72 : 260);
+
   return (
     <motion.aside
       initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
+      animate={{ 
+        width,
+        x: isMobile ? (collapsed ? -260 : 0) : 0
+      }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       className={`fixed left-0 top-0 h-screen ${bg} border-r ${borderColor} z-50 flex flex-col transition-colors duration-300`}
     >
       {/* Logo */}
-      <div className={`h-16 flex items-center px-5 border-b ${borderColor}`}>
-        <Link to="/admin" className="flex items-center gap-3 no-underline">
-          <div className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white rounded-lg p-1' : ''}`}>
-            <img src={logoImg} alt="Logo" className="w-full h-full object-contain" />
-          </div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
+      <div className={`h-16 flex items-center justify-between px-5 border-b ${borderColor}`}>
+        <Link to="/admin" className="flex items-center no-underline overflow-hidden">
+          <AnimatePresence mode="wait">
+            {collapsed ? (
+              <motion.div
+                key="logo-small"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-white rounded-lg p-1' : ''}`}
+              >
+                <img src={logoSmall} alt="Logo" className="w-full h-full object-contain" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="logo-full"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
-                className={`${logoText} font-bold text-lg tracking-tight whitespace-nowrap`}
+                className={`h-10 flex items-center ${isDark ? 'bg-white rounded-lg px-2 py-1' : ''}`}
               >
-                NEXPHONE
-              </motion.span>
+                <img src={logoFull} alt="Logo" className="h-full w-auto object-contain" />
+              </motion.div>
             )}
           </AnimatePresence>
         </Link>
+        {isMobile && (
+          <button
+            onClick={onCloseMobile}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${inactiveColor} border-none outline-none cursor-pointer`}
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}

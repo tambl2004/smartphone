@@ -194,14 +194,14 @@ export const CartPage: React.FC = () => {
                       <span className="text-sm font-bold text-neutral-500 dark:text-neutral-400">{formatPrice(item.product.price)}</span>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 ml-9 sm:ml-0">
+                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2 sm:gap-4 pl-9 sm:pl-0 mt-2 sm:mt-0">
                       {isOutOfStock ? (
-                        <div className="flex flex-col items-center mr-4">
+                        <div className="flex flex-col items-center flex-1 mr-4">
                           <span className="text-sm font-bold text-red-500">Đã hết hàng</span>
                           <span className="text-xs text-neutral-400">Vui lòng xóa khỏi giỏ</span>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
                           <div className="flex items-center rounded-lg bg-neutral-100 dark:bg-neutral-900 p-0.5 border border-neutral-200 dark:border-neutral-800">
                             <button
                               onClick={() => {
@@ -228,14 +228,14 @@ export const CartPage: React.FC = () => {
                       )}
 
                       {!isOutOfStock && (
-                        <span className="font-bold text-base text-black dark:text-white min-w-[100px] text-right tracking-tight">
+                        <span className="font-bold text-sm sm:text-base text-black dark:text-white flex-1 text-center sm:min-w-[100px] sm:text-right tracking-tight truncate px-1">
                           {formatPrice(item.product.price * item.quantity)}
                         </span>
                       )}
 
                       <button
                         onClick={() => removeFromCart(item.product.id)}
-                        className="p-2.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg text-red-500 transition-colors"
+                        className="p-2 sm:p-2.5 flex-shrink-0 bg-red-50 dark:bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg text-red-500 transition-colors"
                         title="Xóa sản phẩm"
                       >
                         <Trash2 size={16} />
